@@ -148,6 +148,37 @@ module Faust2Ruby
 
     private
 
+    # Check if a node is a numeric literal that needs wrapping for composition
+    def numeric_literal?(node)
+      node.is_a?(AST::IntLiteral) || node.is_a?(AST::FloatLiteral)
+    end
+
+    # Recursively check if a node is effectively a numeric value
+    # (handles parens, negation, etc.)
+    def effective_numeric?(node)
+      case node
+      when AST::IntLiteral, AST::FloatLiteral
+        true
+      when AST::UnaryOp
+        node.op == :NEG && effective_numeric?(node.operand)
+      when AST::Paren
+        effective_numeric?(node.expression)
+      else
+        false
+      end
+    end
+
+    # Wrap numeric literals with num() for composition operators
+    # Without this, Ruby's >> would be bit-shift instead of DSL sequencing
+    def wrap_for_composition(node)
+      expr = generate_expression(node)
+      if effective_numeric?(node)
+        "num(#{expr})"
+      else
+        expr
+      end
+    end
+
     def generate_definition(stmt)
       if stmt.params.empty?
         "#{stmt.name} = #{generate_expression(stmt.expression)}"
@@ -193,8 +224,16 @@ module Faust2Ruby
     end
 
     def generate_binary_op(node)
-      left = generate_expression(node.left)
-      right = generate_expression(node.right)
+      # For composition operators, wrap numeric literals with num()
+      # to avoid Ruby interpreting >> as bit-shift
+      case node.op
+      when :SEQ, :PAR, :SPLIT, :MERGE, :REC
+        left = wrap_for_composition(node.left)
+        right = wrap_for_composition(node.right)
+      else
+        left = generate_expression(node.left)
+        right = generate_expression(node.right)
+      end
 
       case node.op
       when :SEQ

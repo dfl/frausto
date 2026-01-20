@@ -183,4 +183,30 @@ class Faust2Ruby::GeneratorTest < Minitest::Test
     assert_includes result, "slider"
     assert_includes result, ">>"
   end
+
+  def test_numeric_literals_wrapped_for_composition
+    # This is the denormal flushing pattern - numeric literals need num() wrapper
+    # Without it, Ruby's >> would be bit-shift instead of DSL sequencing
+    source = "process = 1.0e-18 : (-(1.0e-18));"
+    result = generate(source)
+    # Should wrap literals with num() for composition
+    assert_includes result, "num(1.0e-18)"
+    assert_includes result, ">>"
+  end
+
+  def test_numeric_literals_in_parallel
+    source = "process = 1 , 2;"
+    result = generate(source)
+    assert_includes result, "num(1)"
+    assert_includes result, "num(2)"
+    assert_includes result, "|"
+  end
+
+  def test_numeric_literals_not_wrapped_for_arithmetic
+    # Arithmetic operators work fine with raw numbers
+    source = "process = 1 + 2;"
+    result = generate(source)
+    assert_equal "(1 + 2)", result
+    refute_includes result, "num("
+  end
 end

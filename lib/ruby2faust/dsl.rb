@@ -807,6 +807,12 @@ module Ruby2Faust
       DSP.new(Node.new(type: NodeType::LITERAL, args: [expr], channels: channels))
     end
 
+    # Wrap a numeric value as a DSP node (constant signal)
+    # Useful when composing with >> which would otherwise be Ruby's bit-shift
+    def num(value)
+      DSP.new(Node.new(type: NodeType::LITERAL, args: [value.to_s]))
+    end
+
     # =========================================================================
     # CONSTANTS
     # =========================================================================
