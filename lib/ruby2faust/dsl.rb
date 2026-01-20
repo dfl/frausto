@@ -1140,6 +1140,128 @@ module Ruby2Faust
       DSP.new(Node.new(type: NodeType::AA_CUBIC2))
     end
 
+    # Analyzers (an.)
+    def amp_follower(t)
+      DSP.new(Node.new(type: NodeType::AMP_FOLLOWER, args: [t]))
+    end
+
+    def amp_follower_ar(attack, release)
+      DSP.new(Node.new(type: NodeType::AMP_FOLLOWER_AR, args: [attack, release]))
+    end
+
+    def amp_follower_ud(up, down)
+      DSP.new(Node.new(type: NodeType::AMP_FOLLOWER_UD, args: [up, down]))
+    end
+
+    def rms_envelope_rect(period)
+      DSP.new(Node.new(type: NodeType::RMS_ENVELOPE_RECT, args: [period]))
+    end
+
+    def rms_envelope_tau(tau)
+      DSP.new(Node.new(type: NodeType::RMS_ENVELOPE_TAU, args: [tau]))
+    end
+
+    def abs_envelope_rect(period)
+      DSP.new(Node.new(type: NodeType::ABS_ENVELOPE_RECT, args: [period]))
+    end
+
+    def abs_envelope_tau(tau)
+      DSP.new(Node.new(type: NodeType::ABS_ENVELOPE_TAU, args: [tau]))
+    end
+
+    def ms_envelope_rect(period)
+      DSP.new(Node.new(type: NodeType::MS_ENVELOPE_RECT, args: [period]))
+    end
+
+    def ms_envelope_tau(tau)
+      DSP.new(Node.new(type: NodeType::MS_ENVELOPE_TAU, args: [tau]))
+    end
+
+    def peak_envelope(t)
+      DSP.new(Node.new(type: NodeType::PEAK_ENVELOPE, args: [t]))
+    end
+
+    # Effects (ef.)
+    def cubicnl(drive, offset)
+      DSP.new(Node.new(type: NodeType::CUBICNL, args: [drive, offset]))
+    end
+
+    def gate_mono(thresh, attack, hold, release)
+      DSP.new(Node.new(type: NodeType::GATE_MONO, args: [thresh, attack, hold, release]))
+    end
+
+    def gate_stereo(thresh, attack, hold, release)
+      DSP.new(Node.new(type: NodeType::GATE_STEREO, args: [thresh, attack, hold, release], channels: 2))
+    end
+
+    def ef_compressor_mono(ratio, thresh, attack, release)
+      DSP.new(Node.new(type: NodeType::EF_COMPRESSOR_MONO, args: [ratio, thresh, attack, release]))
+    end
+
+    def ef_compressor_stereo(ratio, thresh, attack, release)
+      DSP.new(Node.new(type: NodeType::EF_COMPRESSOR_STEREO, args: [ratio, thresh, attack, release], channels: 2))
+    end
+
+    def ef_limiter_1176_mono
+      DSP.new(Node.new(type: NodeType::EF_LIMITER_1176_MONO))
+    end
+
+    def ef_limiter_1176_stereo
+      DSP.new(Node.new(type: NodeType::EF_LIMITER_1176_STEREO, channels: 2))
+    end
+
+    def echo(maxdel, del, fb)
+      DSP.new(Node.new(type: NodeType::ECHO, args: [maxdel, del, fb]))
+    end
+
+    def transpose(w, x, s)
+      DSP.new(Node.new(type: NodeType::TRANSPOSE, args: [w, x, s]))
+    end
+
+    def flanger_mono(dmax, delay_freq, level, feedback, invert)
+      DSP.new(Node.new(type: NodeType::FLANGER_MONO, args: [dmax, delay_freq, level, feedback, invert]))
+    end
+
+    def flanger_stereo(dmax, delay_freq, level, feedback, invert, lfsr, lfsf)
+      DSP.new(Node.new(type: NodeType::FLANGER_STEREO, args: [dmax, delay_freq, level, feedback, invert, lfsr, lfsf], channels: 2))
+    end
+
+    def phaser2_mono(nstages, freq, speed, depth, feedback, spread)
+      DSP.new(Node.new(type: NodeType::PHASER2_MONO, args: [nstages, freq, speed, depth, feedback, spread]))
+    end
+
+    def phaser2_stereo(nstages, freq, speed, depth, feedback, spread)
+      DSP.new(Node.new(type: NodeType::PHASER2_STEREO, args: [nstages, freq, speed, depth, feedback, spread], channels: 2))
+    end
+
+    def wah4(fr)
+      DSP.new(Node.new(type: NodeType::WAH4, args: [fr]))
+    end
+
+    def auto_wah(level)
+      DSP.new(Node.new(type: NodeType::AUTO_WAH, args: [level]))
+    end
+
+    def crybaby(wah)
+      DSP.new(Node.new(type: NodeType::CRYBABY, args: [wah]))
+    end
+
+    def vocoder(bands, range)
+      DSP.new(Node.new(type: NodeType::VOCODER, args: [bands, range]))
+    end
+
+    def speakerbp(flo, fhi)
+      DSP.new(Node.new(type: NodeType::SPEAKERBP, args: [flo, fhi]))
+    end
+
+    def dry_wet_mixer(mix)
+      DSP.new(Node.new(type: NodeType::DRY_WET_MIXER, args: [mix]))
+    end
+
+    def dry_wet_mixer_cp(mix)
+      DSP.new(Node.new(type: NodeType::DRY_WET_MIXER_CP, args: [mix]))
+    end
+
     # Constant aliases for those who prefer the capitalized look
     SR    = DSP.new(Node.new(type: NodeType::SR))
     PI    = DSP.new(Node.new(type: NodeType::PI))

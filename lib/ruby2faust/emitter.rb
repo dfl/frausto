@@ -514,6 +514,70 @@ module Ruby2Faust
       when NodeType::AA_CUBIC2
         "aa.cubic2"
 
+      # Analyzers (an.)
+      when NodeType::AMP_FOLLOWER
+        "an.amp_follower(#{emit_args(node, indent, pretty)})"
+      when NodeType::AMP_FOLLOWER_AR
+        "an.amp_follower_ar(#{emit_args(node, indent, pretty)})"
+      when NodeType::AMP_FOLLOWER_UD
+        "an.amp_follower_ud(#{emit_args(node, indent, pretty)})"
+      when NodeType::RMS_ENVELOPE_RECT
+        "an.rms_envelope_rect(#{emit_args(node, indent, pretty)})"
+      when NodeType::RMS_ENVELOPE_TAU
+        "an.rms_envelope_tau(#{emit_args(node, indent, pretty)})"
+      when NodeType::ABS_ENVELOPE_RECT
+        "an.abs_envelope_rect(#{emit_args(node, indent, pretty)})"
+      when NodeType::ABS_ENVELOPE_TAU
+        "an.abs_envelope_tau(#{emit_args(node, indent, pretty)})"
+      when NodeType::MS_ENVELOPE_RECT
+        "an.ms_envelope_rect(#{emit_args(node, indent, pretty)})"
+      when NodeType::MS_ENVELOPE_TAU
+        "an.ms_envelope_tau(#{emit_args(node, indent, pretty)})"
+      when NodeType::PEAK_ENVELOPE
+        "an.peak_envelope(#{emit_args(node, indent, pretty)})"
+
+      # Effects (ef.)
+      when NodeType::CUBICNL
+        "ef.cubicnl(#{emit_args(node, indent, pretty)})"
+      when NodeType::GATE_MONO
+        "ef.gate_mono(#{emit_args(node, indent, pretty)})"
+      when NodeType::GATE_STEREO
+        "ef.gate_stereo(#{emit_args(node, indent, pretty)})"
+      when NodeType::EF_COMPRESSOR_MONO
+        "ef.compressor_mono(#{emit_args(node, indent, pretty)})"
+      when NodeType::EF_COMPRESSOR_STEREO
+        "ef.compressor_stereo(#{emit_args(node, indent, pretty)})"
+      when NodeType::EF_LIMITER_1176_MONO
+        "ef.limiter_1176_R4_mono"
+      when NodeType::EF_LIMITER_1176_STEREO
+        "ef.limiter_1176_R4_stereo"
+      when NodeType::ECHO
+        "ef.echo(#{emit_args(node, indent, pretty)})"
+      when NodeType::TRANSPOSE
+        "ef.transpose(#{emit_args(node, indent, pretty)})"
+      when NodeType::FLANGER_MONO
+        "ef.flanger_mono(#{emit_args(node, indent, pretty)})"
+      when NodeType::FLANGER_STEREO
+        "ef.flanger_stereo(#{emit_args(node, indent, pretty)})"
+      when NodeType::PHASER2_MONO
+        "ef.phaser2_mono(#{emit_args(node, indent, pretty)})"
+      when NodeType::PHASER2_STEREO
+        "ef.phaser2_stereo(#{emit_args(node, indent, pretty)})"
+      when NodeType::WAH4
+        "ef.wah4(#{emit_args(node, indent, pretty)})"
+      when NodeType::AUTO_WAH
+        "ef.auto_wah(#{emit_args(node, indent, pretty)})"
+      when NodeType::CRYBABY
+        "ef.crybaby(#{emit_args(node, indent, pretty)})"
+      when NodeType::VOCODER
+        "ef.vocoder(#{emit_args(node, indent, pretty)})"
+      when NodeType::SPEAKERBP
+        "ef.speakerbp(#{emit_args(node, indent, pretty)})"
+      when NodeType::DRY_WET_MIXER
+        "ef.dryWetMixer(#{emit_args(node, indent, pretty)})"
+      when NodeType::DRY_WET_MIXER_CP
+        "ef.dryWetMixerConstantPower(#{emit_args(node, indent, pretty)})"
+
       else
         raise ArgumentError, "Unknown node type: #{node.type}"
       end

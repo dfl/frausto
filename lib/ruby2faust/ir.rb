@@ -245,6 +245,40 @@ module Ruby2Faust
     AA_CUBIC1   = :aa_cubic1   # aa.cubic1
     AA_CUBIC2   = :aa_cubic2   # aa.cubic2
 
+    # === Analyzers (an.) ===
+    AMP_FOLLOWER      = :amp_follower       # an.amp_follower(t)
+    AMP_FOLLOWER_AR   = :amp_follower_ar    # an.amp_follower_ar(attack, release)
+    AMP_FOLLOWER_UD   = :amp_follower_ud    # an.amp_follower_ud(up, down)
+    RMS_ENVELOPE_RECT = :rms_envelope_rect  # an.rms_envelope_rect(period)
+    RMS_ENVELOPE_TAU  = :rms_envelope_tau   # an.rms_envelope_tau(tau)
+    ABS_ENVELOPE_RECT = :abs_envelope_rect  # an.abs_envelope_rect(period)
+    ABS_ENVELOPE_TAU  = :abs_envelope_tau   # an.abs_envelope_tau(tau)
+    MS_ENVELOPE_RECT  = :ms_envelope_rect   # an.ms_envelope_rect(period)
+    MS_ENVELOPE_TAU   = :ms_envelope_tau    # an.ms_envelope_tau(tau)
+    PEAK_ENVELOPE     = :peak_envelope      # an.peak_envelope(t)
+
+    # === Effects (ef.) ===
+    CUBICNL            = :cubicnl             # ef.cubicnl(drive, offset)
+    GATE_MONO          = :gate_mono           # ef.gate_mono(thresh, att, hold, rel)
+    GATE_STEREO        = :gate_stereo         # ef.gate_stereo(thresh, att, hold, rel)
+    EF_COMPRESSOR_MONO   = :ef_compressor_mono   # ef.compressor_mono
+    EF_COMPRESSOR_STEREO = :ef_compressor_stereo # ef.compressor_stereo
+    EF_LIMITER_1176_MONO   = :ef_limiter_1176_mono   # ef.limiter_1176_R4_mono
+    EF_LIMITER_1176_STEREO = :ef_limiter_1176_stereo # ef.limiter_1176_R4_stereo
+    ECHO               = :echo                # ef.echo(maxdel, del, fb)
+    TRANSPOSE          = :transpose           # ef.transpose(w, x, s)
+    FLANGER_MONO       = :flanger_mono        # ef.flanger_mono(...)
+    FLANGER_STEREO     = :flanger_stereo      # ef.flanger_stereo(...)
+    PHASER2_MONO       = :phaser2_mono        # ef.phaser2_mono(...)
+    PHASER2_STEREO     = :phaser2_stereo      # ef.phaser2_stereo(...)
+    WAH4               = :wah4                # ef.wah4(fr)
+    AUTO_WAH           = :auto_wah            # ef.auto_wah(level)
+    CRYBABY            = :crybaby             # ef.crybaby(wah)
+    VOCODER            = :vocoder             # ef.vocoder(bands, range)
+    SPEAKERBP          = :speakerbp           # ef.speakerbp(flo, fhi)
+    DRY_WET_MIXER      = :dry_wet_mixer       # ef.dryWetMixer(mix)
+    DRY_WET_MIXER_CP   = :dry_wet_mixer_cp    # ef.dryWetMixerConstantPower(mix)
+
     # === Metadata ===
     DECLARE = :declare
   end

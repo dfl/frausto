@@ -484,8 +484,6 @@ The following Faust library namespaces are not yet mapped and will emit `literal
 
 | Namespace | Description | Status |
 |-----------|-------------|--------|
-| `an.*` | Analyzers (amp followers, pitch detection) | Not mapped |
-| `ef.*` | Effects (flangers, phasers, wahs) | Not mapped |
 | `ve.*` | Virtual analog (Moog filters, etc.) | Not mapped |
 | `pm.*` | Physical modeling | Not mapped |
 | `sy.*` | Synthesizers | Not mapped |
@@ -506,6 +504,8 @@ The following Faust library namespaces are not yet mapped and will emit `literal
 - `co.*` - Compressors (compressor_mono, limiter_1176_R4_mono)
 - `sp.*` - Spatial (panner)
 - `aa.*` - Antialiasing (tanh1, tanh2, arctan, softclip, hardclip, etc.)
+- `an.*` - Analyzers (amp_follower, amp_follower_ar, rms_envelope_*, abs_envelope_*, peak_envelope)
+- `ef.*` - Effects (gate_mono/stereo, flanger_mono/stereo, phaser2_mono/stereo, wah4, auto_wah, crybaby, echo, transpose, vocoder, speakerbp, cubicnl, dryWetMixer)
 - Math primitives (sin, cos, tan, tanh, sinh, cosh, abs, min, max, pow, sqrt, exp, log, floor, ceil, etc.)
 
 **Contributing:** To add support for unmapped functions, edit `lib/faust2ruby/library_mapper.rb` and add corresponding entries to `lib/ruby2faust/ir.rb`, `lib/ruby2faust/dsl.rb`, and `lib/ruby2faust/emitter.rb`.

@@ -126,6 +126,40 @@ module Faust2Ruby
       "aa.sin" => { dsl: :aa_sin, args: 0 },
       "aa.cubic1" => { dsl: :aa_cubic1, args: 0 },
       "aa.cubic2" => { dsl: :aa_cubic2, args: 0 },
+
+      # Analyzers (an.)
+      "an.amp_follower" => { dsl: :amp_follower, args: 1 },
+      "an.amp_follower_ar" => { dsl: :amp_follower_ar, args: 2 },
+      "an.amp_follower_ud" => { dsl: :amp_follower_ud, args: 2 },
+      "an.rms_envelope_rect" => { dsl: :rms_envelope_rect, args: 1 },
+      "an.rms_envelope_tau" => { dsl: :rms_envelope_tau, args: 1 },
+      "an.abs_envelope_rect" => { dsl: :abs_envelope_rect, args: 1 },
+      "an.abs_envelope_tau" => { dsl: :abs_envelope_tau, args: 1 },
+      "an.ms_envelope_rect" => { dsl: :ms_envelope_rect, args: 1 },
+      "an.ms_envelope_tau" => { dsl: :ms_envelope_tau, args: 1 },
+      "an.peak_envelope" => { dsl: :peak_envelope, args: 1 },
+
+      # Effects (ef.)
+      "ef.cubicnl" => { dsl: :cubicnl, args: 2 },
+      "ef.gate_mono" => { dsl: :gate_mono, args: 4 },
+      "ef.gate_stereo" => { dsl: :gate_stereo, args: 4 },
+      "ef.compressor_mono" => { dsl: :ef_compressor_mono, args: 4 },
+      "ef.compressor_stereo" => { dsl: :ef_compressor_stereo, args: 4 },
+      "ef.limiter_1176_R4_mono" => { dsl: :ef_limiter_1176_mono, args: 0 },
+      "ef.limiter_1176_R4_stereo" => { dsl: :ef_limiter_1176_stereo, args: 0 },
+      "ef.echo" => { dsl: :echo, args: 3 },
+      "ef.transpose" => { dsl: :transpose, args: 3 },
+      "ef.flanger_mono" => { dsl: :flanger_mono, args: 5 },
+      "ef.flanger_stereo" => { dsl: :flanger_stereo, args: 7 },
+      "ef.phaser2_mono" => { dsl: :phaser2_mono, args: 6 },
+      "ef.phaser2_stereo" => { dsl: :phaser2_stereo, args: 6 },
+      "ef.wah4" => { dsl: :wah4, args: 1 },
+      "ef.auto_wah" => { dsl: :auto_wah, args: 1 },
+      "ef.crybaby" => { dsl: :crybaby, args: 1 },
+      "ef.vocoder" => { dsl: :vocoder, args: 2 },
+      "ef.speakerbp" => { dsl: :speakerbp, args: 2 },
+      "ef.dryWetMixer" => { dsl: :dry_wet_mixer, args: 1 },
+      "ef.dryWetMixerConstantPower" => { dsl: :dry_wet_mixer_cp, args: 1 },
     }.freeze
 
     # Primitive functions that map directly to DSL
