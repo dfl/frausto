@@ -250,15 +250,24 @@ mem      # 1-sample delay
 literal("expr")  # Raw Faust expression
 ```
 
-## Metadata & Imports
+## Metadata & Emitter Options
 
 ```ruby
-prog = Ruby2Faust::Program.new(process)
-  .declare(:name, "MySynth")
-  .declare(:author, "Me")
-  .import("analyzers.lib")
+prog = Ruby2Faust::Program.new do
+  declare :name, "MySynth"
+  declare :author, "Me"
+  import "analyzers.lib"
+  
+  osc(440) * 0.5
+end
 
-puts Ruby2Faust::Emitter.program(prog)
+# Generate pretty-printed Faust with indentation and newlines
+puts Ruby2Faust::Emitter.program(prog, pretty: true)
+
+# The generate helper also supports pretty: true
+puts Ruby2Faust.generate(pretty: true) do
+  hgroup("Synth") { osc(440) + noise }
+end
 ```
 
 ## Example: Subtractive Synth

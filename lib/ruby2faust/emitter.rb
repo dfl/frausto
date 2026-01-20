@@ -9,7 +9,7 @@ module Ruby2Faust
 
     DEFAULT_IMPORTS = ["stdfaust.lib"].freeze
 
-    def program(process, imports: nil, declarations: {})
+    def program(process, imports: nil, declarations: {}, pretty: false)
       if process.is_a?(Program)
         node = process.process.is_a?(DSP) ? process.process.node : process.process
         imports ||= process.imports
@@ -24,11 +24,16 @@ module Ruby2Faust
       lines << "" if declarations.any?
       imports.each { |lib| lines << "import(\"#{lib}\");" }
       lines << ""
-      lines << "process = #{emit(node)};"
+      
+      body = emit(node, pretty: pretty)
+      lines << "process = #{body};"
       lines.join("\n") + "\n"
     end
 
-    def emit(node)
+    def emit(node, indent: 0, pretty: false)
+      sp = "  " * indent
+      next_sp = "  " * (indent + 1)
+
       case node.type
 
       # === COMMENTS ===
@@ -36,29 +41,29 @@ module Ruby2Faust
         "// #{node.args[0]}\n"
       when NodeType::DOC
         # Inline comment wrapped around the inner expression
-        "/* #{node.args[0]} */ #{emit(node.inputs[0])}"
+        "/* #{node.args[0]} */ #{emit(node.inputs[0], indent: indent, pretty: pretty)}"
 
       # === OSCILLATORS ===
       when NodeType::OSC
-        "os.osc(#{emit(node.inputs[0])})"
+        "os.osc(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::SAW
-        "os.sawtooth(#{emit(node.inputs[0])})"
+        "os.sawtooth(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::SQUARE
-        "os.square(#{emit(node.inputs[0])})"
+        "os.square(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::TRIANGLE
-        "os.triangle(#{emit(node.inputs[0])})"
+        "os.triangle(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::PHASOR
-        "os.phasor(#{emit(node.inputs[0])}, #{emit(node.inputs[1])})"
+        "os.phasor(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
       when NodeType::LF_SAW
-        "os.lf_sawpos(#{emit(node.inputs[0])})"
+        "os.lf_sawpos(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::LF_TRIANGLE
-        "os.lf_trianglepos(#{emit(node.inputs[0])})"
+        "os.lf_trianglepos(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::LF_SQUARE
-        "os.lf_squarewavepos(#{emit(node.inputs[0])})"
+        "os.lf_squarewavepos(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::IMPTRAIN
-        "os.lf_imptrain(#{emit(node.inputs[0])})"
+        "os.lf_imptrain(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::PULSETRAIN
-        "os.lf_pulsetrain(#{emit(node.inputs[0])}, #{emit(node.inputs[1])})"
+        "os.lf_pulsetrain(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
 
       # === NOISE ===
       when NodeType::NOISE
@@ -68,65 +73,65 @@ module Ruby2Faust
 
       # === FILTERS ===
       when NodeType::LP
-        "fi.lowpass(#{node.args[0] || 1}, #{emit(node.inputs[0])})"
+        "fi.lowpass(#{node.args[0] || 1}, #{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::HP
-        "fi.highpass(#{node.args[0] || 1}, #{emit(node.inputs[0])})"
+        "fi.highpass(#{node.args[0] || 1}, #{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::BP
-        "fi.bandpass(1, #{emit(node.inputs[0])}, #{emit(node.inputs[1])})"
+        "fi.bandpass(1, #{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
       when NodeType::RESONLP
-        "fi.resonlp(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])})"
+        "fi.resonlp(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
       when NodeType::RESONHP
-        "fi.resonhp(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])})"
+        "fi.resonhp(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
       when NodeType::RESONBP
-        "fi.resonbp(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])})"
+        "fi.resonbp(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
       when NodeType::ALLPASS
-        "fi.allpass_comb(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])})"
+        "fi.allpass_comb(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
       when NodeType::DCBLOCK
         "fi.dcblocker"
       when NodeType::PEAK_EQ
-        "fi.peak_eq(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])})"
+        "fi.peak_eq(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
 
       # === DELAYS ===
       when NodeType::DELAY
-        "de.delay(#{emit(node.inputs[0])}, #{emit(node.inputs[1])})"
+        "de.delay(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
       when NodeType::FDELAY
-        "de.fdelay(#{emit(node.inputs[0])}, #{emit(node.inputs[1])})"
+        "de.fdelay(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
       when NodeType::SDELAY
-        "de.sdelay(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])})"
+        "de.sdelay(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
 
       # === ENVELOPES ===
       when NodeType::AR
-        "en.ar(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])})"
+        "en.ar(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
       when NodeType::ASR
-        "en.asr(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])}, #{emit(node.inputs[3])})"
+        "en.asr(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)}, #{emit(node.inputs[3], indent: indent, pretty: pretty)})"
       when NodeType::ADSR
-        "en.adsr(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])}, #{emit(node.inputs[3])}, #{emit(node.inputs[4])})"
+        "en.adsr(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)}, #{emit(node.inputs[3], indent: indent, pretty: pretty)}, #{emit(node.inputs[4], indent: indent, pretty: pretty)})"
       when NodeType::ADSRE
-        "en.adsre(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])}, #{emit(node.inputs[3])}, #{emit(node.inputs[4])})"
+        "en.adsre(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)}, #{emit(node.inputs[3], indent: indent, pretty: pretty)}, #{emit(node.inputs[4], indent: indent, pretty: pretty)})"
 
       # === MATH ===
       when NodeType::GAIN
-        "*(#{emit(node.inputs[0])})"
+        "*(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::ADD
-        node.inputs.count == 2 ? "(#{emit(node.inputs[0])} + #{emit(node.inputs[1])})" : "+"
+        node.inputs.count == 2 ? "(#{emit(node.inputs[0], indent: indent, pretty: pretty)} + #{emit(node.inputs[1], indent: indent, pretty: pretty)})" : "+"
       when NodeType::MUL
-        node.inputs.count == 2 ? "(#{emit(node.inputs[0])} * #{emit(node.inputs[1])})" : "*"
+        node.inputs.count == 2 ? "(#{emit(node.inputs[0], indent: indent, pretty: pretty)} * #{emit(node.inputs[1], indent: indent, pretty: pretty)})" : "*"
       when NodeType::SUB
-        node.inputs.count == 2 ? "(#{emit(node.inputs[0])} - #{emit(node.inputs[1])})" : "-"
+        node.inputs.count == 2 ? "(#{emit(node.inputs[0], indent: indent, pretty: pretty)} - #{emit(node.inputs[1], indent: indent, pretty: pretty)})" : "-"
       when NodeType::DIV
-        node.inputs.count == 2 ? "(#{emit(node.inputs[0])} / #{emit(node.inputs[1])})" : "/"
+        node.inputs.count == 2 ? "(#{emit(node.inputs[0], indent: indent, pretty: pretty)} / #{emit(node.inputs[1], indent: indent, pretty: pretty)})" : "/"
       when NodeType::NEG
-        "0 - #{emit(node.inputs[0])}"
+        "0 - #{emit(node.inputs[0], indent: indent, pretty: pretty)}"
       when NodeType::ABS
         "abs"
       when NodeType::MIN
-        "min(#{emit(node.inputs[0])}, #{emit(node.inputs[1])})"
+        "min(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
       when NodeType::MAX
-        "max(#{emit(node.inputs[0])}, #{emit(node.inputs[1])})"
+        "max(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
       when NodeType::CLIP
-        "max(#{emit(node.inputs[0])}) : min(#{emit(node.inputs[1])})"
+        "max(#{emit(node.inputs[0], indent: indent, pretty: pretty)}) : min(#{emit(node.inputs[1], indent: indent, pretty: pretty)})"
       when NodeType::POW
-        "pow(#{emit(node.inputs[0])}, #{emit(node.inputs[1])})"
+        "pow(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
       when NodeType::SQRT
         "sqrt"
       when NodeType::EXP
@@ -150,7 +155,7 @@ module Ruby2Faust
       when NodeType::ATAN
         "atan"
       when NodeType::ATAN2
-        "atan2(#{emit(node.inputs[0])}, #{emit(node.inputs[1])})"
+        "atan2(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
       when NodeType::FLOOR
         "floor"
       when NodeType::CEIL
@@ -158,7 +163,7 @@ module Ruby2Faust
       when NodeType::RINT
         "rint"
       when NodeType::FMOD
-        "fmod(#{emit(node.inputs[0])}, #{emit(node.inputs[1])})"
+        "fmod(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
       when NodeType::INT
         "int"
       when NodeType::FLOAT
@@ -166,31 +171,31 @@ module Ruby2Faust
 
       # === CONVERSION ===
       when NodeType::DB2LINEAR
-        "ba.db2linear(#{emit(node.inputs[0])})"
+        "ba.db2linear(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::LINEAR2DB
-        "ba.linear2db(#{emit(node.inputs[0])})"
+        "ba.linear2db(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::SAMP2SEC
-        "ba.samp2sec(#{emit(node.inputs[0])})"
+        "ba.samp2sec(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::SEC2SAMP
-        "ba.sec2samp(#{emit(node.inputs[0])})"
+        "ba.sec2samp(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::MIDI2HZ
-        "ba.midikey2hz(#{emit(node.inputs[0])})"
+        "ba.midikey2hz(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::HZ2MIDI
-        "ba.hz2midikey(#{emit(node.inputs[0])})"
+        "ba.hz2midikey(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
 
       # === SMOOTHING ===
       when NodeType::SMOOTH
-        "si.smooth(ba.tau2pole(#{emit(node.inputs[0])}))"
+        "si.smooth(ba.tau2pole(#{emit(node.inputs[0], indent: indent, pretty: pretty)}))"
       when NodeType::SMOO
         "si.smoo"
 
       # === SELECTORS ===
       when NodeType::SELECT2
-        "select2(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])})"
+        "select2(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
       when NodeType::SELECTN
         n = node.args[0]
-        idx = emit(node.inputs[0])
-        signals = node.inputs[1..].map { |i| emit(i) }.join(", ")
+        idx = emit(node.inputs[0], indent: indent, pretty: pretty)
+        signals = node.inputs[1..].map { |i| emit(i, indent: indent, pretty: pretty) }.join(", ")
         "ba.selectn(#{n}, #{idx}, #{signals})"
 
       # === ROUTING ===
@@ -201,7 +206,7 @@ module Ruby2Faust
 
       # === REVERBS ===
       when NodeType::FREEVERB
-        "re.mono_freeverb(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])}, #{emit(node.inputs[3])})"
+        "re.mono_freeverb(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)}, #{emit(node.inputs[3], indent: indent, pretty: pretty)})"
       when NodeType::ZITA_REV
         args = node.args.join(", ")
         "re.zita_rev1_stereo(#{args})"
@@ -211,13 +216,13 @@ module Ruby2Faust
 
       # === COMPRESSORS ===
       when NodeType::COMPRESSOR
-        "co.compressor_mono(#{emit(node.inputs[0])}, #{emit(node.inputs[1])}, #{emit(node.inputs[2])}, #{emit(node.inputs[3])})"
+        "co.compressor_mono(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)}, #{emit(node.inputs[3], indent: indent, pretty: pretty)})"
       when NodeType::LIMITER
         "co.limiter_1176_R4_mono"
 
       # === SPATIAL ===
       when NodeType::PANNER
-        "sp.panner(#{emit(node.inputs[0])})"
+        "sp.panner(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
 
       # === UI CONTROLS ===
       when NodeType::SLIDER
@@ -234,25 +239,68 @@ module Ruby2Faust
       when NodeType::CHECKBOX
         "checkbox(\"#{node.args[0]}\")"
       when NodeType::HGROUP
-        "hgroup(\"#{node.args[0]}\", #{emit(node.inputs[0])})"
+        content = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
+        if pretty
+          "hgroup(\"#{node.args[0]}\",\n#{next_sp}#{content}\n#{sp})"
+        else
+          "hgroup(\"#{node.args[0]}\", #{content})"
+        end
       when NodeType::VGROUP
-        "vgroup(\"#{node.args[0]}\", #{emit(node.inputs[0])})"
+        content = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
+        if pretty
+          "vgroup(\"#{node.args[0]}\",\n#{next_sp}#{content}\n#{sp})"
+        else
+          "vgroup(\"#{node.args[0]}\", #{content})"
+        end
       when NodeType::TGROUP
-        "tgroup(\"#{node.args[0]}\", #{emit(node.inputs[0])})"
+        content = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
+        if pretty
+          "tgroup(\"#{node.args[0]}\",\n#{next_sp}#{content}\n#{sp})"
+        else
+          "tgroup(\"#{node.args[0]}\", #{content})"
+        end
 
       # === COMPOSITION ===
       when NodeType::SEQ
-        "(#{emit(node.inputs[0])} : #{emit(node.inputs[1])})"
+        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
+        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty)
+        if pretty
+          "(\n#{next_sp}#{left}\n#{next_sp}: #{right}\n#{sp})"
+        else
+          "(#{left} : #{right})"
+        end
       when NodeType::PAR
-        "(#{emit(node.inputs[0])}, #{emit(node.inputs[1])})"
+        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
+        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty)
+        if pretty
+          "(\n#{next_sp}#{left},\n#{next_sp}#{right}\n#{sp})"
+        else
+          "(#{left}, #{right})"
+        end
       when NodeType::SPLIT
-        source = emit(node.inputs[0])
-        targets = node.inputs[1..].map { |n| emit(n) }.join(", ")
-        "(#{source} <: #{targets})"
+        source = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
+        targets = node.inputs[1..].map { |n| emit(n, indent: indent + 1, pretty: pretty) }
+        if pretty
+          "(\n#{next_sp}#{source}\n#{next_sp}<: #{targets.join(",\n#{next_sp}   ")}\n#{sp})"
+        else
+          "(#{source} <: #{targets.join(", ")})"
+        end
       when NodeType::MERGE
-        "(#{emit(node.inputs[0])} :> #{emit(node.inputs[1])})"
+        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
+        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty)
+        if pretty
+          "(\n#{next_sp}#{left}\n#{next_sp}:> #{right}\n#{sp})"
+        else
+          "(#{left} :> #{right})"
+        end
       when NodeType::FEEDBACK
-        "(#{emit(node.inputs[0])} ~ #{emit(node.inputs[1])})"
+        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
+        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty)
+        if pretty
+          "(\n#{next_sp}#{left}\n#{next_sp}~ #{right}\n#{sp})"
+        else
+          "(#{left} ~ #{right})"
+        end
 
       # === UTILITY ===
       when NodeType::WIRE

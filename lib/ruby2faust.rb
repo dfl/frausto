@@ -18,10 +18,10 @@ module Ruby2Faust
   #
   # @yield Block that returns a DSP
   # @return [String] Faust source code
-  def self.generate(&block)
+  def self.generate(pretty: false, &block)
     context = Object.new
     context.extend(DSL)
     process = context.instance_eval(&block)
-    Emitter.program(process)
+    Emitter.program(process, pretty: pretty)
   end
 end

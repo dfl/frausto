@@ -66,4 +66,13 @@ class RubyismTest < Minitest::Test
     assert_match(/declare name "Test";/, code)
     assert_match(/process = \(os.osc\(440\) \* 0.5\);/, code)
   end
+
+  def test_pretty_printing
+    code = Ruby2Faust.generate(pretty: true) do
+      hgroup("Synth") { osc(440) >> gain(0.5) }
+    end
+    assert_match(/hgroup\("Synth",/, code)
+    assert_match(/\n  \(/, code)
+    assert_match(/:/, code)
+  end
 end
