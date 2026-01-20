@@ -431,6 +431,38 @@ literal("letrec { 'v = (v + (step * ...)); 'pos = (pos + (step * v)) } pos")
 
 **Impact:** In practice, letrec is rare. Complex DSP files like triode.lib (500+ lines) convert with only 1 literal remaining (the letrec block).
 
+### Unmapped Library Functions
+
+The following Faust library namespaces are not yet mapped and will emit `literal()`:
+
+| Namespace | Description | Status |
+|-----------|-------------|--------|
+| `an.*` | Analyzers (amp followers, pitch detection) | Not mapped |
+| `ef.*` | Effects (flangers, phasers, wahs) | Not mapped |
+| `ve.*` | Virtual analog (Moog filters, etc.) | Not mapped |
+| `pm.*` | Physical modeling | Not mapped |
+| `sy.*` | Synthesizers | Not mapped |
+| `dx.*` | DX7 emulation | Not mapped |
+| `pf.*` | Phaflangers | Not mapped |
+| `dm.*` | Demos | Not mapped |
+
+**Currently mapped:**
+- `os.*` - Oscillators (osc, saw, square, triangle, phasor, lf_*)
+- `no.*` - Noise (noise, pink_noise)
+- `fi.*` - Filters (lowpass, highpass, resonlp, svf.*, allpass, dcblocker, peak_eq, tf1/tf2, etc.)
+- `de.*` - Delays (delay, fdelay, sdelay)
+- `en.*` - Envelopes (ar, asr, adsr, adsre)
+- `ba.*` - Basics (db2linear, linear2db, tau2pole, midikey2hz, selectn, if, take)
+- `si.*` - Signals (smooth, smoo, bus, block)
+- `ma.*` - Math (SR, PI, tempo, tanh)
+- `re.*` - Reverbs (mono_freeverb, zita_rev1_stereo, jpverb)
+- `co.*` - Compressors (compressor_mono, limiter_1176_R4_mono)
+- `sp.*` - Spatial (panner)
+- `aa.*` - Antialiasing (tanh1, tanh2, arctan, softclip, hardclip, etc.)
+- Math primitives (sin, cos, tan, tanh, sinh, cosh, abs, min, max, pow, sqrt, exp, log, floor, ceil, etc.)
+
+**Contributing:** To add support for unmapped functions, edit `lib/faust2ruby/library_mapper.rb` and add corresponding entries to `lib/ruby2faust/ir.rb`, `lib/ruby2faust/dsl.rb`, and `lib/ruby2faust/emitter.rb`.
+
 ## Architecture
 
 ```
