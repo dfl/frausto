@@ -20,10 +20,7 @@ gem 'ruby2faust'
 require 'ruby2faust'
 include Ruby2Faust::DSL
 
-# Build a simple synth
 process = osc(440).then(gain(0.3))
-
-# Generate Faust code
 puts Ruby2Faust::Emitter.program(process)
 ```
 
@@ -36,35 +33,122 @@ process = (os.osc(440) : *(0.3));
 
 ## DSL Reference
 
-### Oscillators
+### Oscillators (os.)
 ```ruby
-osc(freq)      # Sine wave
-saw(freq)      # Sawtooth
-square(freq)   # Square wave
-triangle(freq) # Triangle wave
-noise          # White noise
+osc(freq)       # Sine wave
+saw(freq)       # Sawtooth
+square(freq)    # Square wave
+triangle(freq)  # Triangle wave
+lf_saw(freq)    # Low-freq sawtooth (0-1)
+imptrain(freq)  # Impulse train
+phasor(n, freq) # Table phasor
 ```
 
-### Filters
+### Noise (no.)
 ```ruby
-lp(freq)              # Lowpass (1st order)
-lp(freq, order: 4)    # Lowpass (4th order)
-hp(freq)              # Highpass
-bp(freq, q: 2)        # Bandpass
+noise       # White noise
+pink_noise  # Pink noise
+```
+
+### Filters (fi.)
+```ruby
+lp(freq, order: 1)       # Lowpass
+hp(freq, order: 1)       # Highpass
+bp(freq, q: 1)           # Bandpass
+resonlp(freq, q, gain)   # Resonant lowpass
+resonhp(freq, q, gain)   # Resonant highpass
+allpass(max, d, fb)      # Allpass comb
+dcblock                  # DC blocker
+peak_eq(freq, q, db)     # Parametric EQ
+```
+
+### Delays (de.)
+```ruby
+delay(max, samples)      # Integer delay
+fdelay(max, samples)     # Fractional delay
+sdelay(max, interp, d)   # Smooth delay
+```
+
+### Envelopes (en.)
+```ruby
+ar(attack, release, gate)
+asr(attack, sustain, release, gate)
+adsr(attack, decay, sustain, release, gate)
+adsre(attack, decay, sustain, release, gate)  # Exponential
 ```
 
 ### Math
 ```ruby
-gain(x)   # Multiply by x
-add       # Sum inputs
-mul       # Multiply inputs
+gain(x)     # Multiply
+add         # Sum (+)
+mul         # Multiply (*)
+sub         # Subtract (-)
+div         # Divide (/)
+abs_        # Absolute value
+min_(a, b)  # Minimum
+max_(a, b)  # Maximum
+clip(min, max)  # Clamp
+pow(base, exp)
+sqrt_, exp_, log_, log10_
+sin_, cos_, tan_, tanh_
+floor_, ceil_, rint_
+```
+
+### Conversion (ba.)
+```ruby
+db2linear(x)   # dB to linear
+linear2db(x)   # Linear to dB
+midi2hz(x)     # MIDI note to Hz
+hz2midi(x)     # Hz to MIDI note
+samp2sec(x)    # Samples to seconds
+sec2samp(x)    # Seconds to samples
+```
+
+### Smoothing (si.)
+```ruby
+smooth(tau)    # Smooth with time constant
+smoo           # Default 5ms smooth
+```
+
+### Selectors
+```ruby
+select2(cond, a, b)          # 2-way select
+selectn(n, index, *signals)  # N-way select
+```
+
+### Routing (si.)
+```ruby
+bus(n)    # N parallel wires
+block(n)  # Terminate N signals
+```
+
+### Reverbs (re.)
+```ruby
+freeverb(fb1, fb2, damp, spread)
+zita_rev(rdel, f1, f2, t60dc, t60m, fsmax)
+jpverb(t60, damp, size, ...)
+```
+
+### Compressors (co.)
+```ruby
+compressor(ratio, thresh, attack, release)
+limiter
+```
+
+### Spatial (sp.)
+```ruby
+panner(pan)  # Stereo panner (0-1)
 ```
 
 ### UI Controls
 ```ruby
-slider("freq", init: 440, min: 20, max: 2000)
-button("trigger")
-checkbox("enable")
+slider("name", init:, min:, max:, step: 0.01)
+vslider("name", init:, min:, max:, step: 0.01)
+nentry("name", init:, min:, max:, step: 1)
+button("name")
+checkbox("name")
+hgroup("name", content)
+vgroup("name", content)
 ```
 
 ### Composition Operators
@@ -79,79 +163,65 @@ checkbox("enable")
 
 Aliases: `>>` for `.then`, `|` for `.par`
 
-### Examples
-
-**Subtractive synth:**
+### Constants
 ```ruby
-freq = slider("freq", init: 200, min: 50, max: 2000)
-cutoff = slider("cutoff", init: 800, min: 100, max: 5000)
-amp = slider("amp", init: 0.3, min: 0, max: 1)
-
-saw(freq)
-  .then(lp(cutoff))
-  .then(gain(amp))
+sr    # Sample rate (ma.SR)
+pi    # Pi (ma.PI)
 ```
 
-**Stereo output:**
+### Utility
 ```ruby
-left = osc(440).then(gain(0.3))
-right = osc(442).then(gain(0.3))
-left.par(right)
+wire     # Pass-through (_)
+cut      # Terminate (!)
+mem      # 1-sample delay
+literal("expr")  # Raw Faust expression
 ```
 
-**Feedback delay:**
+## Metadata & Imports
+
 ```ruby
-wire.feedback(
-  gain(0.7).then(lp(2000))
-)
+prog = Ruby2Faust::Program.new(process)
+  .declare(:name, "MySynth")
+  .declare(:author, "Me")
+  .import("analyzers.lib")
+
+puts Ruby2Faust::Emitter.program(prog)
 ```
 
-**Mix parallel signals:**
-```ruby
-osc(440).par(noise.then(gain(0.1))).merge(add)
-```
-
-## CLI Usage
-
-```bash
-# Compile Ruby DSL to .dsp
-ruby2faust compile synth.rb
-
-# Compile with custom output
-ruby2faust compile -o output.dsp synth.rb
-
-# Compile and run Faust (requires faust in PATH)
-ruby2faust run synth.rb
-```
-
-Example `synth.rb`:
-```ruby
-# synth.rb
-freq = slider("freq", init: 440, min: 20, max: 2000)
-osc(freq).then(gain(0.3))
-```
-
-## Architecture
-
-```
-Ruby DSL → IR (Graph AST) → Faust Emitter → .dsp → faust2wasm/faust2cpp
-```
-
-- Ruby builds an intermediate representation (IR)
-- IR enables graph diffing for live reload
-- Faust handles all DSP execution
-
-## Live Reload
-
-The gem includes support for hot-reloading DSP graphs:
+## Example: Subtractive Synth
 
 ```ruby
 require 'ruby2faust'
 include Ruby2Faust::DSL
 
-old_graph = osc(440).then(gain(0.3))
-new_graph = osc(880).then(gain(0.3))
+gate = button("gate")
+freq = slider("freq", init: 220, min: 20, max: 2000).then(smoo)
+cutoff = slider("cutoff", init: 1000, min: 100, max: 8000).then(smoo)
 
+env = adsr(0.01, 0.2, 0.6, 0.3, gate)
+
+process = saw(freq)
+  .then(resonlp(cutoff, 4, 1))
+  .then(gain(env))
+  .then(panner(0.5))
+
+prog = Ruby2Faust::Program.new(process)
+  .declare(:name, "SubSynth")
+
+puts Ruby2Faust::Emitter.program(prog)
+```
+
+## CLI
+
+```bash
+ruby2faust compile synth.rb           # Generate .dsp
+ruby2faust compile -o out.dsp synth.rb
+ruby2faust run synth.rb               # Compile + run Faust
+```
+
+## Live Reload
+
+```ruby
 if Ruby2Faust::Live.changed?(old_graph, new_graph)
   Ruby2Faust::Live.compile(new_graph, output: "synth.dsp")
 end

@@ -4,7 +4,6 @@ require_relative "ir"
 
 module Ruby2Faust
   # DSP wrapper class for building graphs with method chaining.
-  # Each DSP instance wraps an IR Node.
   class DSP
     attr_reader :node
 
@@ -13,338 +12,568 @@ module Ruby2Faust
     end
 
     # Sequential composition (Faust :)
-    # Connect output of self to input of other
-    #
-    # @param other [DSP] The DSP to connect to
-    # @return [DSP] New composed DSP
     def then(other)
       other = DSL.to_dsp(other)
-      DSP.new(Node.new(
-        type: NodeType::SEQ,
-        inputs: [node, other.node],
-        channels: other.node.channels
-      ))
+      DSP.new(Node.new(type: NodeType::SEQ, inputs: [node, other.node], channels: other.node.channels))
     end
     alias >> then
 
     # Parallel composition (Faust ,)
-    # Run self and other in parallel
-    #
-    # @param other [DSP] The DSP to run in parallel
-    # @return [DSP] New composed DSP
     def par(other)
       other = DSL.to_dsp(other)
-      DSP.new(Node.new(
-        type: NodeType::PAR,
-        inputs: [node, other.node],
-        channels: node.channels + other.node.channels
-      ))
+      DSP.new(Node.new(type: NodeType::PAR, inputs: [node, other.node], channels: node.channels + other.node.channels))
     end
     alias | par
 
     # Fan-out / split (Faust <:)
-    # Connect self's output to multiple destinations
-    #
-    # @param others [Array<DSP>] DSPs to split into
-    # @return [DSP] New composed DSP
     def split(*others)
       others = others.map { |o| DSL.to_dsp(o) }
       total_channels = others.sum { |o| o.node.channels }
-      DSP.new(Node.new(
-        type: NodeType::SPLIT,
-        inputs: [node] + others.map(&:node),
-        channels: total_channels
-      ))
+      DSP.new(Node.new(type: NodeType::SPLIT, inputs: [node] + others.map(&:node), channels: total_channels))
     end
 
     # Fan-in / merge (Faust :>)
-    # Merge multiple inputs into one output
-    #
-    # @param other [DSP] The DSP to merge into
-    # @return [DSP] New composed DSP
     def merge(other)
       other = DSL.to_dsp(other)
-      DSP.new(Node.new(
-        type: NodeType::MERGE,
-        inputs: [node, other.node],
-        channels: other.node.channels
-      ))
+      DSP.new(Node.new(type: NodeType::MERGE, inputs: [node, other.node], channels: other.node.channels))
     end
 
     # Feedback loop (Faust ~)
-    # Create a feedback connection
-    #
-    # @param other [DSP] The feedback path DSP
-    # @return [DSP] New composed DSP
     def feedback(other)
       other = DSL.to_dsp(other)
-      DSP.new(Node.new(
-        type: NodeType::FEEDBACK,
-        inputs: [node, other.node],
-        channels: node.channels
-      ))
+      DSP.new(Node.new(type: NodeType::FEEDBACK, inputs: [node, other.node], channels: node.channels))
     end
     alias ~ feedback
 
-    # Number of output channels
     def channels
       node.channels
     end
   end
 
-  # DSL module with primitive generators.
-  # Include this module to get access to all DSP primitives.
+  # DSL module with comprehensive Faust library primitives.
   module DSL
     module_function
 
-    # Convert various types to DSP
     def to_dsp(value)
       case value
       when DSP then value
       when Numeric then literal(value.to_s)
       when String then literal(value)
+      when Symbol then literal(value.to_s)
       else raise ArgumentError, "Cannot convert #{value.class} to DSP"
       end
     end
 
-    # --- Oscillators ---
+    # =========================================================================
+    # OSCILLATORS (os.)
+    # =========================================================================
 
-    # Sine oscillator
-    # @param freq [DSP, Numeric] Frequency in Hz
-    # @return [DSP]
     def osc(freq)
       freq = to_dsp(freq)
-      DSP.new(Node.new(type: NodeType::OSC, inputs: [freq.node], channels: 1))
+      DSP.new(Node.new(type: NodeType::OSC, inputs: [freq.node]))
     end
 
-    # Sawtooth oscillator
-    # @param freq [DSP, Numeric] Frequency in Hz
-    # @return [DSP]
     def saw(freq)
       freq = to_dsp(freq)
-      DSP.new(Node.new(type: NodeType::SAW, inputs: [freq.node], channels: 1))
+      DSP.new(Node.new(type: NodeType::SAW, inputs: [freq.node]))
     end
 
-    # Square wave oscillator
-    # @param freq [DSP, Numeric] Frequency in Hz
-    # @return [DSP]
     def square(freq)
       freq = to_dsp(freq)
-      DSP.new(Node.new(type: NodeType::SQUARE, inputs: [freq.node], channels: 1))
+      DSP.new(Node.new(type: NodeType::SQUARE, inputs: [freq.node]))
     end
 
-    # Triangle wave oscillator
-    # @param freq [DSP, Numeric] Frequency in Hz
-    # @return [DSP]
     def triangle(freq)
       freq = to_dsp(freq)
-      DSP.new(Node.new(type: NodeType::TRIANGLE, inputs: [freq.node], channels: 1))
+      DSP.new(Node.new(type: NodeType::TRIANGLE, inputs: [freq.node]))
     end
 
-    # --- Noise ---
+    def phasor(tablesize, freq)
+      tablesize = to_dsp(tablesize)
+      freq = to_dsp(freq)
+      DSP.new(Node.new(type: NodeType::PHASOR, inputs: [tablesize.node, freq.node]))
+    end
 
-    # White noise generator
-    # @return [DSP]
+    def lf_saw(freq)
+      freq = to_dsp(freq)
+      DSP.new(Node.new(type: NodeType::LF_SAW, inputs: [freq.node]))
+    end
+
+    def lf_triangle(freq)
+      freq = to_dsp(freq)
+      DSP.new(Node.new(type: NodeType::LF_TRIANGLE, inputs: [freq.node]))
+    end
+
+    def lf_square(freq)
+      freq = to_dsp(freq)
+      DSP.new(Node.new(type: NodeType::LF_SQUARE, inputs: [freq.node]))
+    end
+
+    def imptrain(freq)
+      freq = to_dsp(freq)
+      DSP.new(Node.new(type: NodeType::IMPTRAIN, inputs: [freq.node]))
+    end
+
+    def pulsetrain(freq, duty)
+      freq = to_dsp(freq)
+      duty = to_dsp(duty)
+      DSP.new(Node.new(type: NodeType::PULSETRAIN, inputs: [freq.node, duty.node]))
+    end
+
+    # =========================================================================
+    # NOISE (no.)
+    # =========================================================================
+
     def noise
-      DSP.new(Node.new(type: NodeType::NOISE, channels: 1))
+      DSP.new(Node.new(type: NodeType::NOISE))
     end
 
-    # --- Filters ---
+    def pink_noise
+      DSP.new(Node.new(type: NodeType::PINK_NOISE))
+    end
 
-    # Lowpass filter
-    # @param freq [DSP, Numeric] Cutoff frequency in Hz
-    # @param order [Integer] Filter order (default 1)
-    # @return [DSP]
+    # =========================================================================
+    # FILTERS (fi.)
+    # =========================================================================
+
     def lp(freq, order: 1)
       freq = to_dsp(freq)
-      DSP.new(Node.new(type: NodeType::LP, args: [order], inputs: [freq.node], channels: 1))
+      DSP.new(Node.new(type: NodeType::LP, args: [order], inputs: [freq.node]))
     end
 
-    # Highpass filter
-    # @param freq [DSP, Numeric] Cutoff frequency in Hz
-    # @param order [Integer] Filter order (default 1)
-    # @return [DSP]
     def hp(freq, order: 1)
       freq = to_dsp(freq)
-      DSP.new(Node.new(type: NodeType::HP, args: [order], inputs: [freq.node], channels: 1))
+      DSP.new(Node.new(type: NodeType::HP, args: [order], inputs: [freq.node]))
     end
 
-    # Bandpass filter
-    # @param freq [DSP, Numeric] Center frequency in Hz
-    # @param q [DSP, Numeric] Q factor
-    # @return [DSP]
     def bp(freq, q: 1)
       freq = to_dsp(freq)
       q = to_dsp(q)
-      DSP.new(Node.new(type: NodeType::BP, inputs: [freq.node, q.node], channels: 1))
+      DSP.new(Node.new(type: NodeType::BP, inputs: [freq.node, q.node]))
     end
 
-    # --- Math ---
+    def resonlp(freq, q, gain = 1)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      gain = to_dsp(gain)
+      DSP.new(Node.new(type: NodeType::RESONLP, inputs: [freq.node, q.node, gain.node]))
+    end
 
-    # Gain / multiply by constant
-    # @param x [DSP, Numeric] Gain value
-    # @return [DSP]
+    def resonhp(freq, q, gain = 1)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      gain = to_dsp(gain)
+      DSP.new(Node.new(type: NodeType::RESONHP, inputs: [freq.node, q.node, gain.node]))
+    end
+
+    def resonbp(freq, q, gain = 1)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      gain = to_dsp(gain)
+      DSP.new(Node.new(type: NodeType::RESONBP, inputs: [freq.node, q.node, gain.node]))
+    end
+
+    def allpass(maxdelay, delay, feedback)
+      maxdelay = to_dsp(maxdelay)
+      delay = to_dsp(delay)
+      feedback = to_dsp(feedback)
+      DSP.new(Node.new(type: NodeType::ALLPASS, inputs: [maxdelay.node, delay.node, feedback.node]))
+    end
+
+    def dcblock
+      DSP.new(Node.new(type: NodeType::DCBLOCK))
+    end
+
+    def peak_eq(freq, q, gain_db)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      gain_db = to_dsp(gain_db)
+      DSP.new(Node.new(type: NodeType::PEAK_EQ, inputs: [freq.node, q.node, gain_db.node]))
+    end
+
+    # =========================================================================
+    # DELAYS (de.)
+    # =========================================================================
+
+    def delay(maxdelay, d)
+      maxdelay = to_dsp(maxdelay)
+      d = to_dsp(d)
+      DSP.new(Node.new(type: NodeType::DELAY, inputs: [maxdelay.node, d.node]))
+    end
+
+    def fdelay(maxdelay, d)
+      maxdelay = to_dsp(maxdelay)
+      d = to_dsp(d)
+      DSP.new(Node.new(type: NodeType::FDELAY, inputs: [maxdelay.node, d.node]))
+    end
+
+    def sdelay(maxdelay, interp, d)
+      maxdelay = to_dsp(maxdelay)
+      interp = to_dsp(interp)
+      d = to_dsp(d)
+      DSP.new(Node.new(type: NodeType::SDELAY, inputs: [maxdelay.node, interp.node, d.node]))
+    end
+
+    # =========================================================================
+    # ENVELOPES (en.)
+    # =========================================================================
+
+    def ar(attack, release, gate)
+      attack = to_dsp(attack)
+      release = to_dsp(release)
+      gate = to_dsp(gate)
+      DSP.new(Node.new(type: NodeType::AR, inputs: [attack.node, release.node, gate.node]))
+    end
+
+    def asr(attack, sustain_level, release, gate)
+      attack = to_dsp(attack)
+      sustain_level = to_dsp(sustain_level)
+      release = to_dsp(release)
+      gate = to_dsp(gate)
+      DSP.new(Node.new(type: NodeType::ASR, inputs: [attack.node, sustain_level.node, release.node, gate.node]))
+    end
+
+    def adsr(attack, decay, sustain, release, gate)
+      attack = to_dsp(attack)
+      decay = to_dsp(decay)
+      sustain = to_dsp(sustain)
+      release = to_dsp(release)
+      gate = to_dsp(gate)
+      DSP.new(Node.new(type: NodeType::ADSR, inputs: [attack.node, decay.node, sustain.node, release.node, gate.node]))
+    end
+
+    def adsre(attack, decay, sustain, release, gate)
+      attack = to_dsp(attack)
+      decay = to_dsp(decay)
+      sustain = to_dsp(sustain)
+      release = to_dsp(release)
+      gate = to_dsp(gate)
+      DSP.new(Node.new(type: NodeType::ADSRE, inputs: [attack.node, decay.node, sustain.node, release.node, gate.node]))
+    end
+
+    # =========================================================================
+    # MATH (primitives + ma.)
+    # =========================================================================
+
     def gain(x)
       x = to_dsp(x)
-      DSP.new(Node.new(type: NodeType::GAIN, inputs: [x.node], channels: 1))
+      DSP.new(Node.new(type: NodeType::GAIN, inputs: [x.node]))
     end
 
-    # Add signals
-    # @return [DSP]
     def add
-      DSP.new(Node.new(type: NodeType::ADD, channels: 1))
+      DSP.new(Node.new(type: NodeType::ADD))
     end
 
-    # Multiply signals
-    # @return [DSP]
     def mul
-      DSP.new(Node.new(type: NodeType::MUL, channels: 1))
+      DSP.new(Node.new(type: NodeType::MUL))
     end
 
-    # Absolute value
-    # @return [DSP]
+    def sub
+      DSP.new(Node.new(type: NodeType::SUB))
+    end
+
+    def div
+      DSP.new(Node.new(type: NodeType::DIV))
+    end
+
+    def neg
+      DSP.new(Node.new(type: NodeType::NEG))
+    end
+
     def abs_
-      DSP.new(Node.new(type: NodeType::ABS, channels: 1))
+      DSP.new(Node.new(type: NodeType::ABS))
     end
 
-    # Power function (base^exponent)
-    # @param base [DSP, Numeric] Base value
-    # @param exponent [DSP, Numeric] Exponent value
-    # @return [DSP]
+    def min_(a, b)
+      a = to_dsp(a)
+      b = to_dsp(b)
+      DSP.new(Node.new(type: NodeType::MIN, inputs: [a.node, b.node]))
+    end
+
+    def max_(a, b)
+      a = to_dsp(a)
+      b = to_dsp(b)
+      DSP.new(Node.new(type: NodeType::MAX, inputs: [a.node, b.node]))
+    end
+
+    def clip(min_val, max_val)
+      min_val = to_dsp(min_val)
+      max_val = to_dsp(max_val)
+      DSP.new(Node.new(type: NodeType::CLIP, inputs: [min_val.node, max_val.node]))
+    end
+
     def pow(base, exponent)
       base = to_dsp(base)
       exponent = to_dsp(exponent)
-      DSP.new(Node.new(type: NodeType::POW, inputs: [base.node, exponent.node], channels: 1))
+      DSP.new(Node.new(type: NodeType::POW, inputs: [base.node, exponent.node]))
     end
 
-    # --- Conversion ---
-
-    # Convert dB to linear gain
-    # @param db [DSP, Numeric] Value in decibels
-    # @return [DSP]
-    def db2linear(db)
-      db = to_dsp(db)
-      DSP.new(Node.new(type: NodeType::DB2LINEAR, inputs: [db.node], channels: 1))
+    def sqrt_
+      DSP.new(Node.new(type: NodeType::SQRT))
     end
 
-    # --- Smoothing ---
+    def exp_
+      DSP.new(Node.new(type: NodeType::EXP))
+    end
 
-    # Smooth signal with time constant
-    # Uses si.smooth with ba.tau2pole internally
-    # @param tau [DSP, Numeric] Time constant in seconds
-    # @return [DSP]
+    def log_
+      DSP.new(Node.new(type: NodeType::LOG))
+    end
+
+    def log10_
+      DSP.new(Node.new(type: NodeType::LOG10))
+    end
+
+    def sin_
+      DSP.new(Node.new(type: NodeType::SIN))
+    end
+
+    def cos_
+      DSP.new(Node.new(type: NodeType::COS))
+    end
+
+    def tan_
+      DSP.new(Node.new(type: NodeType::TAN))
+    end
+
+    def tanh_
+      DSP.new(Node.new(type: NodeType::TANH))
+    end
+
+    def asin_
+      DSP.new(Node.new(type: NodeType::ASIN))
+    end
+
+    def acos_
+      DSP.new(Node.new(type: NodeType::ACOS))
+    end
+
+    def atan_
+      DSP.new(Node.new(type: NodeType::ATAN))
+    end
+
+    def atan2(y, x)
+      y = to_dsp(y)
+      x = to_dsp(x)
+      DSP.new(Node.new(type: NodeType::ATAN2, inputs: [y.node, x.node]))
+    end
+
+    def floor_
+      DSP.new(Node.new(type: NodeType::FLOOR))
+    end
+
+    def ceil_
+      DSP.new(Node.new(type: NodeType::CEIL))
+    end
+
+    def rint_
+      DSP.new(Node.new(type: NodeType::RINT))
+    end
+
+    def fmod(x, y)
+      x = to_dsp(x)
+      y = to_dsp(y)
+      DSP.new(Node.new(type: NodeType::FMOD, inputs: [x.node, y.node]))
+    end
+
+    def int_
+      DSP.new(Node.new(type: NodeType::INT))
+    end
+
+    def float_
+      DSP.new(Node.new(type: NodeType::FLOAT))
+    end
+
+    # =========================================================================
+    # CONVERSION (ba.)
+    # =========================================================================
+
+    def db2linear(x)
+      x = to_dsp(x)
+      DSP.new(Node.new(type: NodeType::DB2LINEAR, inputs: [x.node]))
+    end
+
+    def linear2db(x)
+      x = to_dsp(x)
+      DSP.new(Node.new(type: NodeType::LINEAR2DB, inputs: [x.node]))
+    end
+
+    def samp2sec(x)
+      x = to_dsp(x)
+      DSP.new(Node.new(type: NodeType::SAMP2SEC, inputs: [x.node]))
+    end
+
+    def sec2samp(x)
+      x = to_dsp(x)
+      DSP.new(Node.new(type: NodeType::SEC2SAMP, inputs: [x.node]))
+    end
+
+    def midi2hz(x)
+      x = to_dsp(x)
+      DSP.new(Node.new(type: NodeType::MIDI2HZ, inputs: [x.node]))
+    end
+
+    def hz2midi(x)
+      x = to_dsp(x)
+      DSP.new(Node.new(type: NodeType::HZ2MIDI, inputs: [x.node]))
+    end
+
+    # =========================================================================
+    # SMOOTHING (si.)
+    # =========================================================================
+
     def smooth(tau)
       tau = to_dsp(tau)
-      DSP.new(Node.new(type: NodeType::SMOOTH, inputs: [tau.node], channels: 1))
+      DSP.new(Node.new(type: NodeType::SMOOTH, inputs: [tau.node]))
     end
 
-    # --- Selectors ---
+    def smoo
+      DSP.new(Node.new(type: NodeType::SMOO))
+    end
 
-    # Select between two signals based on condition
-    # @param condition [DSP, Numeric] 0 selects first, 1 selects second
-    # @param a [DSP] First signal (selected when condition=0)
-    # @param b [DSP] Second signal (selected when condition=1)
-    # @return [DSP]
+    # =========================================================================
+    # SELECTORS
+    # =========================================================================
+
     def select2(condition, a, b)
       condition = to_dsp(condition)
       a = to_dsp(a)
       b = to_dsp(b)
-      DSP.new(Node.new(
-        type: NodeType::SELECT2,
-        inputs: [condition.node, a.node, b.node],
-        channels: a.node.channels
-      ))
+      DSP.new(Node.new(type: NodeType::SELECT2, inputs: [condition.node, a.node, b.node], channels: a.node.channels))
     end
 
-    # Select from n signals based on index
-    # @param n [Integer] Number of inputs
-    # @param index [DSP, Numeric] Index to select (0 to n-1)
-    # @param signals [Array<DSP>] Signals to select from
-    # @return [DSP]
     def selectn(n, index, *signals)
       index = to_dsp(index)
       signals = signals.map { |s| to_dsp(s) }
-      DSP.new(Node.new(
-        type: NodeType::SELECTN,
-        args: [n],
-        inputs: [index.node] + signals.map(&:node),
-        channels: signals.first&.node&.channels || 1
-      ))
+      DSP.new(Node.new(type: NodeType::SELECTN, args: [n], inputs: [index.node] + signals.map(&:node), channels: signals.first&.node&.channels || 1))
     end
 
-    # --- UI Controls ---
+    # =========================================================================
+    # ROUTING (si./ro.)
+    # =========================================================================
 
-    # Horizontal slider
-    # @param name [String] Parameter name (can include Faust metadata like [style:knob])
-    # @param init [Numeric] Initial value
-    # @param min [Numeric] Minimum value
-    # @param max [Numeric] Maximum value
-    # @param step [Numeric] Step size (default 0.01)
-    # @return [DSP]
+    def bus(n)
+      DSP.new(Node.new(type: NodeType::BUS, args: [n], channels: n))
+    end
+
+    def block(n)
+      DSP.new(Node.new(type: NodeType::BLOCK, args: [n], channels: 0))
+    end
+
+    # =========================================================================
+    # REVERBS (re.)
+    # =========================================================================
+
+    def freeverb(fb1, fb2, damp, spread)
+      fb1 = to_dsp(fb1)
+      fb2 = to_dsp(fb2)
+      damp = to_dsp(damp)
+      spread = to_dsp(spread)
+      DSP.new(Node.new(type: NodeType::FREEVERB, inputs: [fb1.node, fb2.node, damp.node, spread.node]))
+    end
+
+    def zita_rev(rdel, f1, f2, t60dc, t60m, fsmax)
+      DSP.new(Node.new(type: NodeType::ZITA_REV, args: [rdel, f1, f2, t60dc, t60m, fsmax], channels: 2))
+    end
+
+    def jpverb(t60, damp, size, early_diff, mod_depth, mod_freq, low, mid, high, low_cut, high_cut)
+      DSP.new(Node.new(type: NodeType::JPVERB, args: [t60, damp, size, early_diff, mod_depth, mod_freq, low, mid, high, low_cut, high_cut], channels: 2))
+    end
+
+    # =========================================================================
+    # COMPRESSORS (co.)
+    # =========================================================================
+
+    def compressor(ratio, thresh, attack, release)
+      ratio = to_dsp(ratio)
+      thresh = to_dsp(thresh)
+      attack = to_dsp(attack)
+      release = to_dsp(release)
+      DSP.new(Node.new(type: NodeType::COMPRESSOR, inputs: [ratio.node, thresh.node, attack.node, release.node]))
+    end
+
+    def limiter
+      DSP.new(Node.new(type: NodeType::LIMITER))
+    end
+
+    # =========================================================================
+    # SPATIAL (sp.)
+    # =========================================================================
+
+    def panner(pan)
+      pan = to_dsp(pan)
+      DSP.new(Node.new(type: NodeType::PANNER, inputs: [pan.node], channels: 2))
+    end
+
+    # =========================================================================
+    # UI CONTROLS
+    # =========================================================================
+
     def slider(name, init:, min:, max:, step: 0.01)
-      DSP.new(Node.new(
-        type: NodeType::SLIDER,
-        args: [name, init, min, max, step],
-        channels: 1
-      ))
+      DSP.new(Node.new(type: NodeType::SLIDER, args: [name, init, min, max, step]))
     end
 
-    # Button (momentary)
-    # @param name [String] Button name
-    # @return [DSP]
+    def vslider(name, init:, min:, max:, step: 0.01)
+      DSP.new(Node.new(type: NodeType::VSLIDER, args: [name, init, min, max, step]))
+    end
+
+    def nentry(name, init:, min:, max:, step: 1)
+      DSP.new(Node.new(type: NodeType::NENTRY, args: [name, init, min, max, step]))
+    end
+
     def button(name)
-      DSP.new(Node.new(type: NodeType::BUTTON, args: [name], channels: 1))
+      DSP.new(Node.new(type: NodeType::BUTTON, args: [name]))
     end
 
-    # Checkbox (toggle)
-    # @param name [String] Checkbox name
-    # @return [DSP]
     def checkbox(name)
-      DSP.new(Node.new(type: NodeType::CHECKBOX, args: [name], channels: 1))
+      DSP.new(Node.new(type: NodeType::CHECKBOX, args: [name]))
     end
 
-    # Horizontal group for UI organization
-    # @param name [String] Group name
-    # @param content [DSP] Content inside the group
-    # @return [DSP]
     def hgroup(name, content)
       content = to_dsp(content)
-      DSP.new(Node.new(
-        type: NodeType::HGROUP,
-        args: [name],
-        inputs: [content.node],
-        channels: content.node.channels
-      ))
+      DSP.new(Node.new(type: NodeType::HGROUP, args: [name], inputs: [content.node], channels: content.node.channels))
     end
 
-    # Vertical group for UI organization
-    # @param name [String] Group name
-    # @param content [DSP] Content inside the group
-    # @return [DSP]
     def vgroup(name, content)
       content = to_dsp(content)
-      DSP.new(Node.new(
-        type: NodeType::VGROUP,
-        args: [name],
-        inputs: [content.node],
-        channels: content.node.channels
-      ))
+      DSP.new(Node.new(type: NodeType::VGROUP, args: [name], inputs: [content.node], channels: content.node.channels))
     end
 
-    # --- Utility ---
+    def tgroup(name, content)
+      content = to_dsp(content)
+      DSP.new(Node.new(type: NodeType::TGROUP, args: [name], inputs: [content.node], channels: content.node.channels))
+    end
 
-    # Wire (pass-through)
-    # @return [DSP]
+    # =========================================================================
+    # UTILITY
+    # =========================================================================
+
     def wire
-      DSP.new(Node.new(type: NodeType::WIRE, channels: 1))
+      DSP.new(Node.new(type: NodeType::WIRE))
     end
 
-    # Raw Faust expression literal
-    # @param expr [String] Faust expression
-    # @param channels [Integer] Number of output channels (default 1)
-    # @return [DSP]
+    def cut
+      DSP.new(Node.new(type: NodeType::CUT, channels: 0))
+    end
+
+    def mem
+      DSP.new(Node.new(type: NodeType::MEM))
+    end
+
     def literal(expr, channels: 1)
       DSP.new(Node.new(type: NodeType::LITERAL, args: [expr], channels: channels))
+    end
+
+    # =========================================================================
+    # CONSTANTS
+    # =========================================================================
+
+    def sr
+      DSP.new(Node.new(type: NodeType::SR))
+    end
+
+    def pi
+      DSP.new(Node.new(type: NodeType::PI))
     end
   end
 
@@ -358,13 +587,11 @@ module Ruby2Faust
       @imports = ["stdfaust.lib"]
     end
 
-    # Add a declaration (name, author, license, etc.)
     def declare(key, value)
       @declarations[key] = value
       self
     end
 
-    # Add an import
     def import(lib)
       @imports << lib unless @imports.include?(lib)
       self

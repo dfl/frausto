@@ -5,90 +5,155 @@ require "digest"
 module Ruby2Faust
   # Intermediate Representation node for DSP graphs.
   # Nodes are immutable value objects representing DSP operations.
-  #
-  # @attr type [Symbol] Node type (:osc, :gain, :seq, :par, etc.)
-  # @attr args [Array] Arguments to the node (frequencies, gains, names, etc.)
-  # @attr inputs [Array<Node>] Input nodes (for composition operators)
-  # @attr channels [Integer] Number of output channels this node produces
   Node = Struct.new(:type, :args, :inputs, :channels, keyword_init: true) do
     def initialize(type:, args: [], inputs: [], channels: 1)
       super(type: type, args: args.freeze, inputs: inputs.freeze, channels: channels)
     end
 
-    # Generate a fingerprint for graph diffing.
-    # Two graphs with the same fingerprint are structurally identical.
-    #
-    # @return [String] SHA1 hex digest
     def fingerprint
-      content = [
-        type,
-        args,
-        inputs.map(&:fingerprint)
-      ].inspect
+      content = [type, args, inputs.map(&:fingerprint)].inspect
       Digest::SHA1.hexdigest(content)
     end
 
-    # Check if two graphs are structurally identical.
-    #
-    # @param other [Node] Another node to compare
-    # @return [Boolean]
     def same_structure?(other)
       fingerprint == other.fingerprint
     end
   end
 
-  # Node type constants for clarity
+  # Node type constants - comprehensive Faust library coverage
   module NodeType
-    # Oscillators
-    OSC      = :osc
-    SAW      = :saw
-    SQUARE   = :square
-    TRIANGLE = :triangle
+    # === Oscillators (os.) ===
+    OSC       = :osc        # os.osc(freq) - sine
+    SAW       = :saw        # os.sawtooth(freq)
+    SQUARE    = :square     # os.square(freq)
+    TRIANGLE  = :triangle   # os.triangle(freq)
+    PHASOR    = :phasor     # os.phasor(tablesize, freq)
+    LF_SAW    = :lf_saw     # os.lf_sawpos(freq) - low-freq sawtooth 0-1
+    LF_TRIANGLE = :lf_triangle
+    LF_SQUARE = :lf_square
+    IMPTRAIN  = :imptrain   # os.lf_imptrain(freq) - impulse train
+    PULSETRAIN = :pulsetrain # os.lf_pulsetrain(freq, duty)
 
-    # Noise
-    NOISE = :noise
+    # === Noise (no.) ===
+    NOISE      = :noise      # no.noise - white
+    PINK_NOISE = :pink_noise # no.pink_noise
 
-    # Filters
-    LP = :lp
-    HP = :hp
-    BP = :bp
+    # === Filters (fi.) ===
+    LP = :lp  # fi.lowpass(order, freq)
+    HP = :hp  # fi.highpass(order, freq)
+    BP = :bp  # fi.bandpass(order, freq, q)
+    RESONLP = :resonlp  # fi.resonlp(freq, q, gain)
+    RESONHP = :resonhp
+    RESONBP = :resonbp
+    ALLPASS = :allpass  # fi.allpass_comb(maxdelay, delay, feedback)
+    DCBLOCK = :dcblock  # fi.dcblocker
+    PEAK_EQ = :peak_eq  # fi.peak_eq(freq, q, gain_db)
 
-    # Math
-    GAIN = :gain
-    ADD  = :add
-    MUL  = :mul
-    ABS  = :abs
-    POW  = :pow
+    # === Delays (de.) ===
+    DELAY  = :delay   # de.delay(maxdelay, delay)
+    FDELAY = :fdelay  # de.fdelay(maxdelay, delay) - fractional
+    SDELAY = :sdelay  # de.sdelay(maxdelay, interp, delay) - smooth
 
-    # Conversion
-    DB2LINEAR = :db2linear
+    # === Envelopes (en.) ===
+    AR    = :ar    # en.ar(attack, release, gate)
+    ASR   = :asr   # en.asr(attack, sustain_level, release, gate)
+    ADSR  = :adsr  # en.adsr(attack, decay, sustain, release, gate)
+    ADSRE = :adsre # en.adsre with exponential segments
 
-    # Smoothing
-    SMOOTH = :smooth
+    # === Math (primitives + ma.) ===
+    GAIN = :gain       # *(x)
+    ADD  = :add        # +
+    MUL  = :mul        # *
+    SUB  = :sub        # -
+    DIV  = :div        # /
+    NEG  = :neg        # 0 - x
+    ABS  = :abs        # abs
+    MIN  = :min        # min(a, b)
+    MAX  = :max        # max(a, b)
+    CLIP = :clip       # max(min_val, min(max_val, x))
+    POW  = :pow        # pow(base, exp)
+    SQRT = :sqrt       # sqrt
+    EXP  = :exp        # exp
+    LOG  = :log        # log
+    LOG10 = :log10     # log10
+    SIN  = :sin        # sin
+    COS  = :cos        # cos
+    TAN  = :tan        # tan
+    ASIN = :asin
+    ACOS = :acos
+    ATAN = :atan
+    ATAN2 = :atan2
+    TANH = :tanh       # ma.tanh - saturating
+    FLOOR = :floor
+    CEIL = :ceil
+    RINT = :rint       # round to int
+    FMOD = :fmod       # fmod(x, y)
+    REMAINDER = :remainder
 
-    # Selectors
-    SELECT2 = :select2
-    SELECTN = :selectn
+    # === Conversion (ba.) ===
+    DB2LINEAR = :db2linear  # ba.db2linear
+    LINEAR2DB = :linear2db  # ba.linear2db
+    SAMP2SEC  = :samp2sec   # ba.samp2sec
+    SEC2SAMP  = :sec2samp   # ba.sec2samp
+    MIDI2HZ   = :midi2hz    # ba.midikey2hz
+    HZ2MIDI   = :hz2midi    # ba.hz2midikey
 
-    # UI Controls
+    # === Smoothing (si.) ===
+    SMOOTH    = :smooth     # si.smooth(ba.tau2pole(tau))
+    SMOO      = :smoo       # si.smoo - default 5ms smooth
+    POLYSMOOTH = :polysmooth # si.polySmooth(s, n)
+
+    # === Selectors ===
+    SELECT2 = :select2  # select2(cond, a, b)
+    SELECTN = :selectn  # ba.selectn(n, idx, ...)
+
+    # === Routing (si./ro.) ===
+    BUS   = :bus    # si.bus(n) - n parallel wires
+    BLOCK = :block  # si.block(n) - terminate n signals
+
+    # === Reverbs (re.) ===
+    FREEVERB = :freeverb  # re.mono_freeverb(fb1, fb2, damp, spread)
+    ZITA_REV = :zita_rev  # re.zita_rev1_stereo(...)
+    JPVERB   = :jpverb    # re.jpverb(...)
+
+    # === Compressors (co.) ===
+    COMPRESSOR = :compressor  # co.compressor_mono(ratio, thresh, attack, release)
+    LIMITER    = :limiter     # co.limiter_1176_R4_mono
+
+    # === Spatial (sp.) ===
+    PANNER = :panner  # sp.panner(pan) - stereo pan
+
+    # === UI Controls ===
     SLIDER   = :slider
+    VSLIDER  = :vslider
+    NENTRY   = :nentry
     BUTTON   = :button
     CHECKBOX = :checkbox
     HGROUP   = :hgroup
     VGROUP   = :vgroup
+    TGROUP   = :tgroup
 
-    # Composition
-    SEQ      = :seq       # Sequential (:)
-    PAR      = :par       # Parallel (,)
-    SPLIT    = :split     # Fan-out (<:)
-    MERGE    = :merge     # Fan-in (:>)
-    FEEDBACK = :feedback  # Feedback (~)
+    # === Composition ===
+    SEQ      = :seq       # :
+    PAR      = :par       # ,
+    SPLIT    = :split     # <:
+    MERGE    = :merge     # :>
+    FEEDBACK = :feedback  # ~
+    REC      = :rec       # letrec style
 
-    # Utility
-    WIRE    = :wire    # Pass-through (_)
-    LITERAL = :literal # Raw Faust expression
+    # === Utility ===
+    WIRE    = :wire    # _
+    CUT     = :cut     # !
+    LITERAL = :literal # raw Faust expression
+    MEM     = :mem     # mem (1-sample delay)
+    INT     = :int     # int(x)
+    FLOAT   = :float   # float(x)
 
-    # Metadata
+    # === Constants ===
+    SR = :sr  # ma.SR
+    PI = :pi  # ma.PI
+
+    # === Metadata ===
     DECLARE = :declare
   end
 end
