@@ -371,8 +371,13 @@ module Faust2Ruby
         "selectn(#{args.join(', ')})"
 
       else
-        # Standard call
-        if args.empty?
+        # Standard call - check for partial application
+        expected_args = mapping[:args]
+        if expected_args.is_a?(Integer) && args.length < expected_args && args.length > 0
+          # Partial application - generate as literal
+          faust_args = args.map { |a| to_faust(a) }.join(", ")
+          make_literal("#{original_name}(#{faust_args})")
+        elsif args.empty?
           dsl_method.to_s
         else
           "#{dsl_method}(#{args.join(', ')})"
