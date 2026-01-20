@@ -18,9 +18,10 @@ module Faust2Ruby
     end
 
     # Operator precedence (lowest to highest)
+    # In Faust: SEQ < PAR < SPLIT/MERGE < REC < arithmetic
     PRECEDENCE = {
-      SEQ: 1,      # :
-      PAR: 2,      # ,
+      PAR: 1,      # , (parallel - lowest, used as arg separator)
+      SEQ: 2,      # : (sequential)
       SPLIT: 3,    # <:
       MERGE: 3,    # :>
       REC: 4,      # ~
@@ -263,6 +264,10 @@ module Faust2Ruby
             error("Expected identifier after '.'")
             break
           end
+        when :LETREC
+          # Postfix letrec: expr letrec { ... }
+          letrec = parse_letrec_expr
+          expr = AST::Letrec.new(letrec.definitions, expr, line: letrec.line, column: letrec.column)
         else
           break
         end
@@ -308,9 +313,22 @@ module Faust2Ruby
         advance
         AST::Cut.new(line: token.line, column: token.column)
 
-      when :MUL, :ADD, :SUB, :DIV
-        # Prefix operator form: *(0.5), +(a, b), etc.
-        parse_prefix_operator
+      when :MUL, :ADD, :SUB, :DIV, :MOD
+        # Could be prefix form *(0.5) or standalone primitive +
+        if peek&.type == :LPAREN
+          parse_prefix_operator
+        else
+          # Standalone primitive operator
+          token = advance
+          name = case token.type
+                 when :MUL then "*"
+                 when :ADD then "+"
+                 when :SUB then "-"
+                 when :DIV then "/"
+                 when :MOD then "%"
+                 end
+          AST::Identifier.new(name, line: token.line, column: token.column)
+        end
 
       when :IDENT
         parse_identifier_or_call
@@ -327,13 +345,8 @@ module Faust2Ruby
       when :PAR, :SEQ, :SUM, :PROD
         parse_iteration
 
-      when :WITH
-        # with clause handled as postfix in definition
-        error("Unexpected 'with'")
-        nil
-
       when :LETREC
-        parse_letrec
+        parse_letrec_expr
 
       else
         error("Unexpected token #{current_type}")
@@ -505,15 +518,27 @@ module Faust2Ruby
       AST::Iteration.new(type, var, count, body, line: token.line, column: token.column)
     end
 
-    def parse_letrec
+    def parse_letrec_expr
       token = advance  # consume letrec
       expect(:LBRACE)
       definitions = []
       until current_type == :RBRACE || current_type == :EOF
+        # Handle prime notation for state variables: 'x = expr;
+        has_prime = false
+        if current_type == :PRIME
+          has_prime = true
+          advance  # consume '
+        end
+
         if current_type == :IDENT
           name = advance.value
+          name = "'#{name}" if has_prime  # Mark as state variable
           expect(:DEF)
           expr = parse_expression
+          # Handle nested with
+          if current_type == :WITH
+            expr = parse_with_clause(expr)
+          end
           expect(:ENDDEF)
           definitions << AST::Definition.new(name, expr)
         else
@@ -521,12 +546,7 @@ module Faust2Ruby
         end
       end
       expect(:RBRACE)
-      # The expression after letrec
-      expression = nil
-      if current_type != :EOF && current_type != :ENDDEF
-        expression = parse_expression
-      end
-      AST::Letrec.new(definitions, expression, line: token.line, column: token.column)
+      AST::Letrec.new(definitions, nil, line: token.line, column: token.column)
     end
   end
 end
