@@ -1,0 +1,124 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+require "faust2ruby"
+
+options = {
+  expression_only: false,
+  verbose: false
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: faust2ruby [options] <input.dsp>"
+  opts.separator ""
+  opts.separator "Convert Faust DSP code to Ruby DSL code compatible with ruby2faust."
+  opts.separator ""
+  opts.separator "Options:"
+
+  opts.on("-o", "--output FILE", "Output Ruby file (default: stdout)") do |file|
+    options[:output] = file
+  end
+
+  opts.on("-e", "--expression", "Output only process expression (no boilerplate)") do
+    options[:expression_only] = true
+  end
+
+  opts.on("-v", "--verbose", "Verbose output (show parsing info)") do
+    options[:verbose] = true
+  end
+
+  opts.on("-t", "--tokens", "Show lexer tokens (debug mode)") do
+    options[:tokens] = true
+  end
+
+  opts.on("-a", "--ast", "Show AST (debug mode)") do
+    options[:ast] = true
+  end
+
+  opts.on("--version", "Show version") do
+    puts "faust2ruby #{Faust2Ruby::VERSION}"
+    exit
+  end
+
+  opts.on("-h", "--help", "Show this help") do
+    puts opts
+    exit
+  end
+end
+
+begin
+  parser.parse!
+rescue OptionParser::InvalidOption => e
+  warn e.message
+  warn parser
+  exit 1
+end
+
+# Read input
+if ARGV.empty?
+  if $stdin.tty?
+    warn "Error: No input file specified"
+    warn parser
+    exit 1
+  end
+  source = $stdin.read
+  input_name = "<stdin>"
+else
+  input_path = ARGV[0]
+  unless File.exist?(input_path)
+    warn "Error: File not found: #{input_path}"
+    exit 1
+  end
+  source = File.read(input_path)
+  input_name = input_path
+end
+
+begin
+  if options[:verbose]
+    warn "Parsing #{input_name}..."
+  end
+
+  # Debug: show tokens
+  if options[:tokens]
+    tokens = Faust2Ruby.tokenize(source)
+    puts "Tokens:"
+    tokens.each do |token|
+      puts "  #{token.type.to_s.ljust(12)} #{token.value.inspect.ljust(20)} line #{token.line}, col #{token.column}"
+    end
+    puts
+  end
+
+  # Debug: show AST
+  if options[:ast]
+    program = Faust2Ruby.parse(source)
+    puts "AST:"
+    program.statements.each do |stmt|
+      puts "  #{stmt.class.name.split('::').last}: #{stmt.inspect[0..100]}..."
+    end
+    puts
+  end
+
+  # Generate Ruby code
+  ruby_code = Faust2Ruby.to_ruby(source, expression_only: options[:expression_only])
+
+  if options[:output]
+    File.write(options[:output], ruby_code)
+    warn "Wrote #{options[:output]}" if options[:verbose]
+  else
+    puts ruby_code
+  end
+
+rescue Faust2Ruby::ParseError => e
+  warn "Parse error: #{e.message}"
+  exit 1
+rescue Faust2Ruby::Error => e
+  warn "Error: #{e.message}"
+  exit 1
+rescue StandardError => e
+  warn "Unexpected error: #{e.message}"
+  warn e.backtrace.first(5).join("\n") if options[:verbose]
+  exit 1
+end
