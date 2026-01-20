@@ -1,6 +1,8 @@
---title "Ruby2Faust Documentation"
+--title "Frausto Documentation"
 --markup markdown
 --readme README.md
 lib/**/*.rb
 -
+ruby2faust.md
+faust2ruby.md
 LICENSE.txt

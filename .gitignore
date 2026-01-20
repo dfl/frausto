@@ -5,6 +5,7 @@ pkg/
 # Bundler
 .bundle/
 vendor/bundle/
+Gemfile.lock
 
 # IDE/Editor
 .idea/

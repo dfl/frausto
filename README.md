@@ -1,5 +1,10 @@
 # Frausto
 
+[![Gem Version](https://badge.fury.io/rb/frausto.svg)](https://rubygems.org/gems/frausto)
+[![CI](https://github.com/dfl/ruby2faust/actions/workflows/ci.yml/badge.svg)](https://github.com/dfl/ruby2faust/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Ruby](https://img.shields.io/badge/ruby-%3E%3D%203.0-ruby.svg)](https://www.ruby-lang.org)
+
 A Ruby toolkit for Faust DSP: generate Faust code from Ruby, or convert Faust to Ruby.
 
 ## Installation
