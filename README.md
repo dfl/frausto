@@ -40,22 +40,27 @@ Ruby2Faust maps Faust's composition operators to Ruby methods and operators:
 # Sequential: signal flows through a chain
 osc(440) >> lp(800) >> gain(0.3)       # Faust: osc : lp : gain
 
+# Gain shorthand with *
+osc(440) * 0.3                          # Faust: osc : *(0.3)
+saw(freq) * env * 0.5                   # Chain multiple gains
+
 # Parallel: signals run side by side
 osc(440) | osc(442)                     # Faust: osc, osc (stereo)
 
 # Split (fan-out): one signal to many
-osc(440).split(gain(0.5), gain(0.3))   # Faust: osc <: gain, gain
+osc(440).split(gain(0.5) | gain(0.3))  # Faust: osc <: (gain, gain)
 
 # Merge (fan-in): many signals to one
 (osc(440) | noise).merge(add)          # Faust: (osc, noise) :> +
 
 # Feedback: signal loops back
-wire ~ (delay(44100, 22050) >> gain(0.5))  # Faust: _ ~ (delay : gain)
+wire ~ (delay(44100, 22050) * 0.5)     # Faust: _ ~ (delay : *(0.5))
 ```
 
 | Faust | Meaning | Method | Operator |
 |-------|---------|--------|----------|
 | `:` | Sequential | `.then(b)` | `>>` |
+| `*(x)` | Gain | `gain(x)` | `* x` |
 | `,` | Parallel | `.par(b)` | `\|` |
 | `<:` | Fan-out | `.split(*bs)` | n/a |
 | `:>` | Fan-in | `.merge(b)` | n/a |

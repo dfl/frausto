@@ -55,6 +55,14 @@ module Ruby2Faust
     def doc(text)
       DSP.new(Node.new(type: NodeType::DOC, args: [text], inputs: [node], channels: node.channels))
     end
+
+    # Multiply / gain (Faust *)
+    # Chains through a gain node
+    # @param other [Numeric, DSP] Gain value or signal
+    # @return [DSP] New DSP with gain applied
+    def *(other)
+      self >> DSL.gain(other)
+    end
   end
 
   # DSL module with comprehensive Faust library primitives.
