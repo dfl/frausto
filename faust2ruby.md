@@ -394,15 +394,39 @@ Most common Faust library functions are mapped, including `fi.*`, `os.*`, `de.*`
 - Forward references: Functions defined later in `with` blocks are resolved
 
 **Not supported:**
-- Pattern matching and case expressions (see below)
+- Pattern matching on function arguments (see below)
 - Foreign functions (`ffunction`)
 - Component/library imports beyond path tracking
 
-### Pattern Matching and Case Expressions
+### Case Expressions
 
-Faust supports pattern matching on function arguments and case expressions, but these are not currently parsed:
+Case expressions with integer patterns are converted to `select2` chains:
 
-**Pattern matching (multi-rule functions):**
+**Input (Faust):**
+```faust
+process = case {
+  (0) => 1;
+  (1) => 2;
+  (n) => n * 2;
+};
+```
+
+**Output (Ruby):**
+```ruby
+flambda(:n) { |n| select2(n.eq(0), select2(n.eq(1), (n * 2), 2), 1) }
+```
+
+The variable pattern `(n)` becomes the default/else case, and integer patterns are checked in order.
+
+**Limitations:**
+- Only integer patterns are converted to `select2` (variable patterns become default)
+- Complex patterns (tuples, nested expressions) fall back to `literal()`
+- Recursive functions like `fact(0) = 1; fact(n) = n * fact(n-1)` require compile-time evaluation not available at runtime
+
+### Pattern Matching on Function Arguments
+
+Multi-rule function definitions with pattern matching are **not supported**:
+
 ```faust
 // Multiple definitions with different argument patterns
 fact(0) = 1;
@@ -411,23 +435,11 @@ fact(n) = n * fact(n-1);
 // Will fail to parse - only the last definition is kept
 ```
 
-**Case expressions:**
-```faust
-// Case/of syntax for conditional dispatch
-process = case {
-  (0) => 1;
-  (n) => n * 2;
-};
-
-// Will fail to parse
-```
-
 **Workarounds:**
-- Use `select2` or `ba.if` for conditionals: `select2(n == 0, n * 2, 1)`
-- Rewrite recursive patterns using iteration: `prod(i, n, i+1)` for factorial
+- Use `case` expressions instead: `fact = case { (0) => 1; (n) => n * fact(n-1); };`
+- Use `select2` or `ba.if` for conditionals
+- Rewrite recursive patterns using iteration where possible
 - Keep pattern matching code in Faust and import it
-
-**Why not supported:** Pattern matching requires tracking multiple function definitions with the same name and implementing pattern dispatch logic. Case expressions need special AST nodes and evaluation semantics. Both are rare in typical DSP code where `select2`/`ba.if` handle most conditional needs.
 
 ## Known Issues
 

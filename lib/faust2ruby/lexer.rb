@@ -28,6 +28,7 @@ module Faust2Ruby
       ">=" => :GE,
       "<<" => :LSHIFT,
       ">>" => :RSHIFT,
+      "=>" => :ARROW,
     }.freeze
 
     # Single-character operators and punctuation

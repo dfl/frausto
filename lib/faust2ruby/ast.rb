@@ -289,5 +289,27 @@ module Faust2Ruby
         @connections = connections
       end
     end
+
+    # Case expression: case { (pattern) => expr; ... }
+    # Each branch is a CaseBranch with pattern and result
+    class CaseExpr < Node
+      attr_reader :branches
+
+      def initialize(branches, **opts)
+        super(**opts)
+        @branches = branches
+      end
+    end
+
+    # A single branch in a case expression
+    class CaseBranch < Node
+      attr_reader :pattern, :result
+
+      def initialize(pattern, result, **opts)
+        super(**opts)
+        @pattern = pattern  # Can be IntLiteral, Identifier (variable), or Paren
+        @result = result
+      end
+    end
   end
 end

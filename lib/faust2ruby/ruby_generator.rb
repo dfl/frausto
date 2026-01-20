@@ -141,6 +141,9 @@ module Faust2Ruby
       when AST::Letrec
         generate_letrec(node)
 
+      when AST::CaseExpr
+        generate_case_expr(node)
+
       else
         make_literal("/* unknown: #{node.class} */")
       end
@@ -573,6 +576,72 @@ module Faust2Ruby
       end.join("; ")
       expr = node.expression ? to_faust(generate_expression(node.expression)) : "_"
       make_literal("letrec { #{defs} } #{expr}")
+    end
+
+    # Generate code for case expressions
+    # case { (0) => a; (1) => b; (n) => c; }
+    # converts to: flambda(:x) { |x| select2(x.eq(0), select2(x.eq(1), c, b), a) }
+    def generate_case_expr(node)
+      branches = node.branches
+
+      # Separate integer patterns from variable patterns (catch-all)
+      int_branches = []
+      default_branch = nil
+
+      branches.each do |branch|
+        pattern = branch.pattern
+        if pattern.is_a?(AST::IntLiteral) || (pattern.is_a?(AST::Paren) && pattern.expression.is_a?(AST::IntLiteral))
+          # Integer pattern
+          val = pattern.is_a?(AST::Paren) ? pattern.expression.value : pattern.value
+          int_branches << { value: val, result: branch.result }
+        elsif pattern.is_a?(AST::Identifier) || (pattern.is_a?(AST::Paren) && pattern.expression.is_a?(AST::Identifier))
+          # Variable pattern - this is the default/catch-all case
+          var_name = pattern.is_a?(AST::Paren) ? pattern.expression.name : pattern.name
+          default_branch = { var: var_name, result: branch.result }
+        else
+          # Complex pattern - fall back to literal
+          return generate_case_literal(node)
+        end
+      end
+
+      # If no integer patterns at all, fall back to literal
+      if int_branches.empty?
+        return generate_case_literal(node)
+      end
+
+      # Generate a flambda that takes the input and uses select2 chains
+      # We need to use the variable name from default branch if present, else use 'x'
+      var = default_branch ? default_branch[:var] : "x"
+      var = ruby_safe_param(var)
+
+      # Build the select2 chain from inside out
+      # Start with the default/else case (or the last integer branch result if no default)
+      if default_branch
+        inner = generate_expression(default_branch[:result])
+      else
+        # No default - use the last branch result as fallback (arbitrary choice)
+        inner = generate_expression(int_branches.last[:result])
+        int_branches = int_branches[0...-1]
+      end
+
+      # Wrap each integer pattern with select2
+      # select2(cond, false_val, true_val) - condition true returns second arg
+      int_branches.reverse_each do |branch|
+        result = generate_expression(branch[:result])
+        inner = "select2(#{var}.eq(#{branch[:value]}), #{inner}, #{result})"
+      end
+
+      "flambda(:#{var}) { |#{var}| #{inner} }"
+    end
+
+    # Fall back to literal for complex case expressions
+    def generate_case_literal(node)
+      branches_str = node.branches.map do |branch|
+        pattern_str = to_faust(generate_expression(branch.pattern))
+        result_str = to_faust(generate_expression(branch.result))
+        "(#{pattern_str}) => #{result_str}"
+      end.join("; ")
+      make_literal("case { #{branches_str}; }")
     end
   end
 end

@@ -353,6 +353,9 @@ module Faust2Ruby
       when :LETREC
         parse_letrec_expr
 
+      when :CASE
+        parse_case_expr
+
       else
         error("Unexpected token #{current_type}")
         nil
@@ -552,6 +555,34 @@ module Faust2Ruby
       end
       expect(:RBRACE)
       AST::Letrec.new(definitions, nil, line: token.line, column: token.column)
+    end
+
+    # Parse case expression: case { (pattern) => expr; ... }
+    def parse_case_expr
+      token = advance  # consume 'case'
+      expect(:LBRACE)
+      branches = []
+
+      until current_type == :RBRACE || current_type == :EOF
+        # Parse pattern: (pattern)
+        expect(:LPAREN)
+        pattern = parse_expression(PRECEDENCE[:PAR] + 1)
+        expect(:RPAREN)
+
+        # Parse arrow: =>
+        expect(:ARROW)
+
+        # Parse result expression
+        result = parse_expression
+
+        # End of branch: ;
+        expect(:ENDDEF)
+
+        branches << AST::CaseBranch.new(pattern, result, line: token.line, column: token.column)
+      end
+
+      expect(:RBRACE)
+      AST::CaseExpr.new(branches, line: token.line, column: token.column)
     end
   end
 end
