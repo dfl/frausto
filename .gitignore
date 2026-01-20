@@ -14,3 +14,7 @@ vendor/bundle/
 
 # macOS
 .DS_Store
+
+# YARD
+.yardoc/
+doc/
