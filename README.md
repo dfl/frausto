@@ -238,8 +238,9 @@ saw(freq).doc("Main oscillator")
 
 ### Constants
 ```ruby
-sr    # Sample rate (ma.SR)
-pi    # Pi (ma.PI)
+sr, SR       # Sample rate (ma.SR)
+pi, PI       # Pi (ma.PI)
+tempo, TEMPO # BPM tempo (ma.tempo)
 ```
 
 ### Utility

@@ -659,6 +659,15 @@ module Ruby2Faust
     def pi
       DSP.new(Node.new(type: NodeType::PI))
     end
+
+    def tempo
+      DSP.new(Node.new(type: NodeType::TEMPO))
+    end
+
+    # Constant aliases for those who prefer the capitalized look
+    SR    = DSP.new(Node.new(type: NodeType::SR))
+    PI    = DSP.new(Node.new(type: NodeType::PI))
+    TEMPO = DSP.new(Node.new(type: NodeType::TEMPO))
   end
 
   # Program-level metadata for Faust declarations

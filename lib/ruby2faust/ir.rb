@@ -154,8 +154,9 @@ module Ruby2Faust
     FLOAT   = :float   # float(x)
 
     # === Constants ===
-    SR = :sr  # ma.SR
-    PI = :pi  # ma.PI
+    SR = :sr      # ma.SR
+    PI = :pi      # ma.PI
+    TEMPO = :tempo # ma.tempo
 
     # === Metadata ===
     DECLARE = :declare

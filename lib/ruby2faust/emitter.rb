@@ -317,6 +317,8 @@ module Ruby2Faust
         "ma.SR"
       when NodeType::PI
         "ma.PI"
+      when NodeType::TEMPO
+        "ma.tempo"
 
       else
         raise ArgumentError, "Unknown node type: #{node.type}"
