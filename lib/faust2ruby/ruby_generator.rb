@@ -403,11 +403,16 @@ module Faust2Ruby
         # Standard call - check for partial application
         expected_args = mapping[:args]
         if expected_args.is_a?(Integer) && args.length < expected_args && args.length > 0
-          # Partial application - use flambda for 2-arg functions with 1 arg
-          if expected_args == 2 && args.length == 1
-            "flambda(:x) { |x| #{dsl_method}(x, #{args[0]}) }"
+          # Partial application - generate flambda for remaining args
+          missing = expected_args - args.length
+          if missing == 1
+            "flambda(:x) { |x| #{dsl_method}(#{args.join(', ')}, x) }"
+          elsif missing == 2
+            "flambda(:x, :y) { |x, y| #{dsl_method}(#{args.join(', ')}, x, y) }"
+          elsif missing == 3
+            "flambda(:x, :y, :z) { |x, y, z| #{dsl_method}(#{args.join(', ')}, x, y, z) }"
           else
-            # More complex partial application - use literal
+            # Too many missing args - use literal
             faust_args = args.map { |a| to_faust(a) }.join(", ")
             make_literal("#{original_name}(#{faust_args})")
           end
@@ -530,6 +535,13 @@ module Faust2Ruby
       # Generate local definitions inside a lambda for proper scoping
       lines = ["-> {"]
 
+      # Add local definitions to @definitions for forward reference support
+      local_defs = {}
+      node.definitions.each do |defn|
+        local_defs[defn.name] = defn
+        @definitions[defn.name] = defn
+      end
+
       # Generate each local definition
       node.definitions.each do |defn|
         if defn.params.empty?
@@ -547,6 +559,9 @@ module Faust2Ruby
       # Generate the main expression
       lines << "  #{generate_expression(node.expression)}"
       lines << "}.call"
+
+      # Remove local definitions from @definitions (restore scope)
+      local_defs.each_key { |name| @definitions.delete(name) }
 
       lines.join("\n")
     end
