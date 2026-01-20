@@ -4,10 +4,10 @@ Convert Faust DSP code to Ruby DSL code compatible with ruby2faust.
 
 ## Installation
 
-faust2ruby is included with the ruby2faust gem:
+faust2ruby is included with the frausto gem:
 
 ```bash
-gem install ruby2faust
+gem install frausto
 ```
 
 ## Usage

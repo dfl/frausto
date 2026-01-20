@@ -3,18 +3,18 @@
 require_relative "lib/ruby2faust/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "ruby2faust"
+  spec.name = "frausto"
   spec.version = Ruby2Faust::VERSION
   spec.authors = ["David Lowenfels"]
   spec.email = ["dfl@alum.mit.edu"]
 
-  spec.summary = "A Ruby DSL that generates Faust DSP code"
-  spec.description = "Build DSP graphs in Ruby, emit valid Faust source. Ruby describes; Faust executes."
+  spec.summary = "Ruby↔Faust DSP transpiler"
+  spec.description = "Build faust-executable DSP graphs in Ruby DSL with ruby2faust; or convert Faust to Ruby with faust2ruby."
   spec.homepage = "https://github.com/dfl/ruby2faust"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
 
-  spec.files = Dir.glob("{lib,bin}/**/*") + %w[README.md LICENSE.txt]
+  spec.files = Dir.glob("{lib,bin}/**/*") + %w[README.md ruby2faust.md faust2ruby.md LICENSE.txt]
   spec.bindir = "bin"
   spec.executables = ["ruby2faust", "faust2ruby"]
   spec.require_paths = ["lib"]
