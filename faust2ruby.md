@@ -394,9 +394,40 @@ Most common Faust library functions are mapped, including `fi.*`, `os.*`, `de.*`
 - Forward references: Functions defined later in `with` blocks are resolved
 
 **Not supported:**
-- Pattern matching and case expressions
+- Pattern matching and case expressions (see below)
 - Foreign functions (`ffunction`)
 - Component/library imports beyond path tracking
+
+### Pattern Matching and Case Expressions
+
+Faust supports pattern matching on function arguments and case expressions, but these are not currently parsed:
+
+**Pattern matching (multi-rule functions):**
+```faust
+// Multiple definitions with different argument patterns
+fact(0) = 1;
+fact(n) = n * fact(n-1);
+
+// Will fail to parse - only the last definition is kept
+```
+
+**Case expressions:**
+```faust
+// Case/of syntax for conditional dispatch
+process = case {
+  (0) => 1;
+  (n) => n * 2;
+};
+
+// Will fail to parse
+```
+
+**Workarounds:**
+- Use `select2` or `ba.if` for conditionals: `select2(n == 0, n * 2, 1)`
+- Rewrite recursive patterns using iteration: `prod(i, n, i+1)` for factorial
+- Keep pattern matching code in Faust and import it
+
+**Why not supported:** Pattern matching requires tracking multiple function definitions with the same name and implementing pattern dispatch logic. Case expressions need special AST nodes and evaluation semantics. Both are rare in typical DSP code where `select2`/`ba.if` handle most conditional needs.
 
 ## Known Issues
 
