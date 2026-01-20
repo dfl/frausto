@@ -91,6 +91,66 @@ module Ruby2Faust
       when NodeType::PEAK_EQ
         "fi.peak_eq(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
 
+      # SVF (State Variable Filter)
+      when NodeType::SVF_LP
+        "fi.svf.lp(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
+      when NodeType::SVF_HP
+        "fi.svf.hp(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
+      when NodeType::SVF_BP
+        "fi.svf.bp(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
+      when NodeType::SVF_NOTCH
+        "fi.svf.notch(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
+      when NodeType::SVF_AP
+        "fi.svf.ap(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
+      when NodeType::SVF_BELL
+        "fi.svf.bell(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
+      when NodeType::SVF_LS
+        "fi.svf.ls(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
+      when NodeType::SVF_HS
+        "fi.svf.hs(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
+
+      # Other filters
+      when NodeType::LOWPASS3E
+        "fi.lowpass3e(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
+      when NodeType::HIGHPASS3E
+        "fi.highpass3e(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
+      when NodeType::LOWPASS6E
+        "fi.lowpass6e(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
+      when NodeType::HIGHPASS6E
+        "fi.highpass6e(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
+      when NodeType::BANDSTOP
+        "fi.bandstop(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
+      when NodeType::NOTCHW
+        "fi.notchw(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
+      when NodeType::LOW_SHELF
+        "fi.low_shelf(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
+      when NodeType::HIGH_SHELF
+        "fi.high_shelf(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
+      when NodeType::PEAK_EQ_CQ
+        "fi.peak_eq_cq(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
+      when NodeType::FI_POLE
+        "fi.pole(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
+      when NodeType::FI_ZERO
+        "fi.zero(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
+      when NodeType::TF1
+        "fi.tf1(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
+      when NodeType::TF2
+        "fi.tf2(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)}, #{emit(node.inputs[3], indent: indent, pretty: pretty)}, #{emit(node.inputs[4], indent: indent, pretty: pretty)})"
+      when NodeType::TF1S
+        "fi.tf1s(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
+      when NodeType::TF2S
+        "fi.tf2s(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)}, #{emit(node.inputs[3], indent: indent, pretty: pretty)}, #{emit(node.inputs[4], indent: indent, pretty: pretty)})"
+      when NodeType::IIR
+        "fi.iir(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
+      when NodeType::FIR
+        "fi.fir(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
+      when NodeType::CONV
+        "fi.conv(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
+      when NodeType::FBCOMBFILTER
+        "fi.fbcombfilter(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)}, #{emit(node.inputs[2], indent: indent, pretty: pretty)})"
+      when NodeType::FFCOMBFILTER
+        "fi.ffcombfilter(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
+
       # === DELAYS ===
       when NodeType::DELAY
         "de.delay(#{emit(node.inputs[0], indent: indent, pretty: pretty)}, #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
@@ -423,6 +483,26 @@ module Ruby2Faust
         "ma.PI"
       when NodeType::TEMPO
         "ma.tempo"
+
+      # === ANTIALIASING ===
+      when NodeType::AA_TANH1
+        "aa.tanh1"
+      when NodeType::AA_TANH2
+        "aa.tanh2"
+      when NodeType::AA_ARCTAN
+        "aa.arctan"
+      when NodeType::AA_SOFTCLIP
+        "aa.softclip"
+      when NodeType::AA_HARDCLIP
+        "aa.hardclip"
+      when NodeType::AA_PARABOLIC
+        "aa.parabolic"
+      when NodeType::AA_SIN
+        "aa.sin"
+      when NodeType::AA_CUBIC1
+        "aa.cubic1"
+      when NodeType::AA_CUBIC2
+        "aa.cubic2"
 
       else
         raise ArgumentError, "Unknown node type: #{node.type}"

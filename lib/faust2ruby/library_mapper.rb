@@ -33,6 +33,38 @@ module Faust2Ruby
       "fi.dcblocker" => { dsl: :dcblock, args: 0 },
       "fi.peak_eq" => { dsl: :peak_eq, args: 3 },
 
+      # SVF (State Variable Filter) (fi.svf.)
+      "fi.svf.lp" => { dsl: :svf_lp, args: 2 },
+      "fi.svf.hp" => { dsl: :svf_hp, args: 2 },
+      "fi.svf.bp" => { dsl: :svf_bp, args: 2 },
+      "fi.svf.notch" => { dsl: :svf_notch, args: 2 },
+      "fi.svf.ap" => { dsl: :svf_ap, args: 2 },
+      "fi.svf.bell" => { dsl: :svf_bell, args: 3 },
+      "fi.svf.ls" => { dsl: :svf_ls, args: 3 },
+      "fi.svf.hs" => { dsl: :svf_hs, args: 3 },
+
+      # Other filters (fi.)
+      "fi.lowpass3e" => { dsl: :lowpass3e, args: 1 },
+      "fi.highpass3e" => { dsl: :highpass3e, args: 1 },
+      "fi.lowpass6e" => { dsl: :lowpass6e, args: 1 },
+      "fi.highpass6e" => { dsl: :highpass6e, args: 1 },
+      "fi.bandstop" => { dsl: :bandstop, args: 3 },
+      "fi.notchw" => { dsl: :notchw, args: 2 },
+      "fi.low_shelf" => { dsl: :low_shelf, args: 3 },
+      "fi.high_shelf" => { dsl: :high_shelf, args: 3 },
+      "fi.peak_eq_cq" => { dsl: :peak_eq_cq, args: 3 },
+      "fi.pole" => { dsl: :fi_pole, args: 1 },
+      "fi.zero" => { dsl: :fi_zero, args: 1 },
+      "fi.tf1" => { dsl: :tf1, args: 3 },
+      "fi.tf2" => { dsl: :tf2, args: 5 },
+      "fi.tf1s" => { dsl: :tf1s, args: 3 },
+      "fi.tf2s" => { dsl: :tf2s, args: 5 },
+      "fi.iir" => { dsl: :iir, args: 2 },
+      "fi.fir" => { dsl: :fir, args: 1 },
+      "fi.conv" => { dsl: :conv, args: 2 },
+      "fi.fbcombfilter" => { dsl: :fbcombfilter, args: 3 },
+      "fi.ffcombfilter" => { dsl: :ffcombfilter, args: 2 },
+
       # Delays (de.)
       "de.delay" => { dsl: :delay, args: 2 },
       "de.fdelay" => { dsl: :fdelay, args: 2 },
@@ -83,6 +115,17 @@ module Faust2Ruby
       "ma.PI" => { dsl: :pi, args: 0 },
       "ma.tempo" => { dsl: :tempo, args: 0 },
       "ma.tanh" => { dsl: :tanh_, args: 0 },
+
+      # Antialiasing (aa.)
+      "aa.tanh1" => { dsl: :aa_tanh1, args: 0 },
+      "aa.tanh2" => { dsl: :aa_tanh2, args: 0 },
+      "aa.arctan" => { dsl: :aa_arctan, args: 0 },
+      "aa.softclip" => { dsl: :aa_softclip, args: 0 },
+      "aa.hardclip" => { dsl: :aa_hardclip, args: 0 },
+      "aa.parabolic" => { dsl: :aa_parabolic, args: 0 },
+      "aa.sin" => { dsl: :aa_sin, args: 0 },
+      "aa.cubic1" => { dsl: :aa_cubic1, args: 0 },
+      "aa.cubic2" => { dsl: :aa_cubic2, args: 0 },
     }.freeze
 
     # Primitive functions that map directly to DSL

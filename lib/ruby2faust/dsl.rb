@@ -321,6 +321,192 @@ module Ruby2Faust
       DSP.new(Node.new(type: NodeType::PEAK_EQ, inputs: [freq.node, q.node, gain_db.node]))
     end
 
+    # SVF (State Variable Filter) filters
+
+    def svf_lp(freq, q)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      DSP.new(Node.new(type: NodeType::SVF_LP, inputs: [freq.node, q.node]))
+    end
+
+    def svf_hp(freq, q)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      DSP.new(Node.new(type: NodeType::SVF_HP, inputs: [freq.node, q.node]))
+    end
+
+    def svf_bp(freq, q)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      DSP.new(Node.new(type: NodeType::SVF_BP, inputs: [freq.node, q.node]))
+    end
+
+    def svf_notch(freq, q)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      DSP.new(Node.new(type: NodeType::SVF_NOTCH, inputs: [freq.node, q.node]))
+    end
+
+    def svf_ap(freq, q)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      DSP.new(Node.new(type: NodeType::SVF_AP, inputs: [freq.node, q.node]))
+    end
+
+    def svf_bell(freq, q, gain)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      gain = to_dsp(gain)
+      DSP.new(Node.new(type: NodeType::SVF_BELL, inputs: [freq.node, q.node, gain.node]))
+    end
+
+    def svf_ls(freq, q, gain)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      gain = to_dsp(gain)
+      DSP.new(Node.new(type: NodeType::SVF_LS, inputs: [freq.node, q.node, gain.node]))
+    end
+
+    def svf_hs(freq, q, gain)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      gain = to_dsp(gain)
+      DSP.new(Node.new(type: NodeType::SVF_HS, inputs: [freq.node, q.node, gain.node]))
+    end
+
+    # Convenience alias for svf_ls (low shelf)
+    def svfLowShelf(freq, q, gain = 1)
+      svf_ls(freq, q, gain)
+    end
+
+    # Other filter types
+
+    def lowpass3e(freq)
+      freq = to_dsp(freq)
+      DSP.new(Node.new(type: NodeType::LOWPASS3E, inputs: [freq.node]))
+    end
+
+    def highpass3e(freq)
+      freq = to_dsp(freq)
+      DSP.new(Node.new(type: NodeType::HIGHPASS3E, inputs: [freq.node]))
+    end
+
+    def lowpass6e(freq)
+      freq = to_dsp(freq)
+      DSP.new(Node.new(type: NodeType::LOWPASS6E, inputs: [freq.node]))
+    end
+
+    def highpass6e(freq)
+      freq = to_dsp(freq)
+      DSP.new(Node.new(type: NodeType::HIGHPASS6E, inputs: [freq.node]))
+    end
+
+    def bandstop(order, freq, q)
+      order = to_dsp(order)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      DSP.new(Node.new(type: NodeType::BANDSTOP, inputs: [order.node, freq.node, q.node]))
+    end
+
+    def notchw(freq, width)
+      freq = to_dsp(freq)
+      width = to_dsp(width)
+      DSP.new(Node.new(type: NodeType::NOTCHW, inputs: [freq.node, width.node]))
+    end
+
+    def low_shelf(freq, q, gain)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      gain = to_dsp(gain)
+      DSP.new(Node.new(type: NodeType::LOW_SHELF, inputs: [freq.node, q.node, gain.node]))
+    end
+
+    def high_shelf(freq, q, gain)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      gain = to_dsp(gain)
+      DSP.new(Node.new(type: NodeType::HIGH_SHELF, inputs: [freq.node, q.node, gain.node]))
+    end
+
+    def peak_eq_cq(freq, q, gain)
+      freq = to_dsp(freq)
+      q = to_dsp(q)
+      gain = to_dsp(gain)
+      DSP.new(Node.new(type: NodeType::PEAK_EQ_CQ, inputs: [freq.node, q.node, gain.node]))
+    end
+
+    def fi_pole(p)
+      p = to_dsp(p)
+      DSP.new(Node.new(type: NodeType::FI_POLE, inputs: [p.node]))
+    end
+
+    def fi_zero(z)
+      z = to_dsp(z)
+      DSP.new(Node.new(type: NodeType::FI_ZERO, inputs: [z.node]))
+    end
+
+    def tf1(b0, b1, a1)
+      b0 = to_dsp(b0)
+      b1 = to_dsp(b1)
+      a1 = to_dsp(a1)
+      DSP.new(Node.new(type: NodeType::TF1, inputs: [b0.node, b1.node, a1.node]))
+    end
+
+    def tf2(b0, b1, b2, a1, a2)
+      b0 = to_dsp(b0)
+      b1 = to_dsp(b1)
+      b2 = to_dsp(b2)
+      a1 = to_dsp(a1)
+      a2 = to_dsp(a2)
+      DSP.new(Node.new(type: NodeType::TF2, inputs: [b0.node, b1.node, b2.node, a1.node, a2.node]))
+    end
+
+    def tf1s(b0, b1, a1)
+      b0 = to_dsp(b0)
+      b1 = to_dsp(b1)
+      a1 = to_dsp(a1)
+      DSP.new(Node.new(type: NodeType::TF1S, inputs: [b0.node, b1.node, a1.node]))
+    end
+
+    def tf2s(b0, b1, b2, a1, a2)
+      b0 = to_dsp(b0)
+      b1 = to_dsp(b1)
+      b2 = to_dsp(b2)
+      a1 = to_dsp(a1)
+      a2 = to_dsp(a2)
+      DSP.new(Node.new(type: NodeType::TF2S, inputs: [b0.node, b1.node, b2.node, a1.node, a2.node]))
+    end
+
+    def iir(bcoeffs, acoeffs)
+      bcoeffs = to_dsp(bcoeffs)
+      acoeffs = to_dsp(acoeffs)
+      DSP.new(Node.new(type: NodeType::IIR, inputs: [bcoeffs.node, acoeffs.node]))
+    end
+
+    def fir(coeffs)
+      coeffs = to_dsp(coeffs)
+      DSP.new(Node.new(type: NodeType::FIR, inputs: [coeffs.node]))
+    end
+
+    def conv(impulse, size)
+      impulse = to_dsp(impulse)
+      size = to_dsp(size)
+      DSP.new(Node.new(type: NodeType::CONV, inputs: [impulse.node, size.node]))
+    end
+
+    def fbcombfilter(maxdel, del, fb)
+      maxdel = to_dsp(maxdel)
+      del = to_dsp(del)
+      fb = to_dsp(fb)
+      DSP.new(Node.new(type: NodeType::FBCOMBFILTER, inputs: [maxdel.node, del.node, fb.node]))
+    end
+
+    def ffcombfilter(maxdel, del)
+      maxdel = to_dsp(maxdel)
+      del = to_dsp(del)
+      DSP.new(Node.new(type: NodeType::FFCOMBFILTER, inputs: [maxdel.node, del.node]))
+    end
+
     # =========================================================================
     # DELAYS (de.)
     # =========================================================================
@@ -892,6 +1078,46 @@ module Ruby2Faust
 
     def tempo
       DSP.new(Node.new(type: NodeType::TEMPO))
+    end
+
+    # =========================================================================
+    # ANTIALIASING (aa.)
+    # =========================================================================
+
+    def aa_tanh1
+      DSP.new(Node.new(type: NodeType::AA_TANH1))
+    end
+
+    def aa_tanh2
+      DSP.new(Node.new(type: NodeType::AA_TANH2))
+    end
+
+    def aa_arctan
+      DSP.new(Node.new(type: NodeType::AA_ARCTAN))
+    end
+
+    def aa_softclip
+      DSP.new(Node.new(type: NodeType::AA_SOFTCLIP))
+    end
+
+    def aa_hardclip
+      DSP.new(Node.new(type: NodeType::AA_HARDCLIP))
+    end
+
+    def aa_parabolic
+      DSP.new(Node.new(type: NodeType::AA_PARABOLIC))
+    end
+
+    def aa_sin
+      DSP.new(Node.new(type: NodeType::AA_SIN))
+    end
+
+    def aa_cubic1
+      DSP.new(Node.new(type: NodeType::AA_CUBIC1))
+    end
+
+    def aa_cubic2
+      DSP.new(Node.new(type: NodeType::AA_CUBIC2))
     end
 
     # Constant aliases for those who prefer the capitalized look

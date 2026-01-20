@@ -53,6 +53,38 @@ module Ruby2Faust
     DCBLOCK = :dcblock  # fi.dcblocker
     PEAK_EQ = :peak_eq  # fi.peak_eq(freq, q, gain_db)
 
+    # SVF (State Variable Filter)
+    SVF_LP    = :svf_lp    # fi.svf.lp(freq, q)
+    SVF_HP    = :svf_hp    # fi.svf.hp(freq, q)
+    SVF_BP    = :svf_bp    # fi.svf.bp(freq, q)
+    SVF_NOTCH = :svf_notch # fi.svf.notch(freq, q)
+    SVF_AP    = :svf_ap    # fi.svf.ap(freq, q)
+    SVF_BELL  = :svf_bell  # fi.svf.bell(freq, q, gain)
+    SVF_LS    = :svf_ls    # fi.svf.ls(freq, q, gain) - low shelf
+    SVF_HS    = :svf_hs    # fi.svf.hs(freq, q, gain) - high shelf
+
+    # Other filters
+    LOWPASS3E  = :lowpass3e   # fi.lowpass3e(freq) - 3rd order elliptic
+    HIGHPASS3E = :highpass3e  # fi.highpass3e(freq)
+    LOWPASS6E  = :lowpass6e   # fi.lowpass6e(freq) - 6th order elliptic
+    HIGHPASS6E = :highpass6e  # fi.highpass6e(freq)
+    BANDSTOP   = :bandstop    # fi.bandstop(order, freq, q)
+    NOTCHW     = :notchw      # fi.notchw(freq, width)
+    LOW_SHELF  = :low_shelf   # fi.low_shelf(freq, q, gain)
+    HIGH_SHELF = :high_shelf  # fi.high_shelf(freq, q, gain)
+    PEAK_EQ_CQ = :peak_eq_cq  # fi.peak_eq_cq(freq, q, gain)
+    FI_POLE    = :fi_pole     # fi.pole(p)
+    FI_ZERO    = :fi_zero     # fi.zero(z)
+    TF1        = :tf1         # fi.tf1(b0, b1, a1)
+    TF2        = :tf2         # fi.tf2(b0, b1, b2, a1, a2)
+    TF1S       = :tf1s        # fi.tf1s(b0, b1, a1)
+    TF2S       = :tf2s        # fi.tf2s(b0, b1, b2, a1, a2)
+    IIR        = :iir         # fi.iir(bcoeffs, acoeffs)
+    FIR        = :fir         # fi.fir(coeffs)
+    CONV       = :conv        # fi.conv(impulse, size)
+    FBCOMBFILTER = :fbcombfilter # fi.fbcombfilter(maxdel, del, fb)
+    FFCOMBFILTER = :ffcombfilter # fi.ffcombfilter(maxdel, del)
+
     # === Delays (de.) ===
     DELAY  = :delay   # de.delay(maxdelay, delay)
     FDELAY = :fdelay  # de.fdelay(maxdelay, delay) - fractional
@@ -163,6 +195,7 @@ module Ruby2Faust
     MERGE    = :merge     # :>
     FEEDBACK = :feedback  # ~
     REC      = :rec       # letrec style
+    LETREC   = :letrec    # letrec { 'x = expr; 'y = expr; } result
 
     # === Iteration ===
     FPAR  = :fpar   # par(i, n, expr)
@@ -195,6 +228,17 @@ module Ruby2Faust
     SR = :sr      # ma.SR
     PI = :pi      # ma.PI
     TEMPO = :tempo # ma.tempo
+
+    # === Antialiasing (aa.) ===
+    AA_TANH1    = :aa_tanh1    # aa.tanh1
+    AA_TANH2    = :aa_tanh2    # aa.tanh2
+    AA_ARCTAN   = :aa_arctan   # aa.arctan
+    AA_SOFTCLIP = :aa_softclip # aa.softclip
+    AA_HARDCLIP = :aa_hardclip # aa.hardclip
+    AA_PARABOLIC = :aa_parabolic # aa.parabolic
+    AA_SIN      = :aa_sin      # aa.sin
+    AA_CUBIC1   = :aa_cubic1   # aa.cubic1
+    AA_CUBIC2   = :aa_cubic2   # aa.cubic2
 
     # === Metadata ===
     DECLARE = :declare
