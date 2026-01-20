@@ -213,18 +213,30 @@ module Faust2Ruby
     def generate_identifier(node)
       name = node.name
 
-      # Check for known primitives that become method calls
-      if LibraryMapper::PRIMITIVES.key?(name)
-        mapping = LibraryMapper::PRIMITIVES[name]
-        if mapping[:args] == 0
-          mapping[:dsl].to_s
-        else
-          name  # Function reference
-        end
-      elsif name == "mem"
+      # Handle primitive operators used as identifiers
+      case name
+      when "+"
+        "add"
+      when "-"
+        "sub"
+      when "*"
+        "mul"
+      when "/"
+        "div"
+      when "mem"
         "mem"
       else
-        name
+        # Check for known primitives that become method calls
+        if LibraryMapper::PRIMITIVES.key?(name)
+          mapping = LibraryMapper::PRIMITIVES[name]
+          if mapping[:args] == 0
+            mapping[:dsl].to_s
+          else
+            name  # Function reference
+          end
+        else
+          name
+        end
       end
     end
 
@@ -493,9 +505,28 @@ module Faust2Ruby
     end
 
     def generate_with(node)
-      # With clauses need special handling for local definitions
-      # For now, just generate the expression
-      generate_expression(node.expression)
+      # Generate local definitions inside a lambda for proper scoping
+      lines = ["-> {"]
+
+      # Generate each local definition
+      node.definitions.each do |defn|
+        if defn.params.empty?
+          # Simple variable definition
+          lines << "  #{defn.name} = #{generate_expression(defn.expression)}"
+        else
+          # Function definition - generate as flambda (creates DSP node)
+          params = defn.params.map { |p| ruby_safe_param(p) }
+          params_syms = params.map { |p| ":#{p}" }.join(", ")
+          params_str = params.join(", ")
+          lines << "  #{defn.name} = flambda(#{params_syms}) { |#{params_str}| #{generate_expression(defn.expression)} }"
+        end
+      end
+
+      # Generate the main expression
+      lines << "  #{generate_expression(node.expression)}"
+      lines << "}.call"
+
+      lines.join("\n")
     end
 
     def generate_letrec(node)
