@@ -22,19 +22,21 @@ module Faust2Ruby
         @definitions[stmt.name] = stmt if stmt.is_a?(AST::Definition)
       end
 
+      # Collect imports and declares
+      imports = program.statements.select { |s| s.is_a?(AST::Import) }.map(&:path)
+      declares = program.statements.select { |s| s.is_a?(AST::Declare) }
+
       unless @expression_only
         lines << "require 'ruby2faust'"
         lines << "include Ruby2Faust::DSL"
         lines << ""
 
         # Generate declares as comments
-        program.statements.each do |stmt|
-          if stmt.is_a?(AST::Declare)
-            lines << "# declare #{stmt.key} \"#{stmt.value}\""
-          end
+        declares.each do |stmt|
+          lines << "# declare #{stmt.key} \"#{stmt.value}\""
         end
 
-        lines << "" if program.statements.any? { |s| s.is_a?(AST::Declare) }
+        lines << "" if declares.any?
 
         # Generate helper definitions (excluding process)
         program.statements.each do |stmt|
@@ -53,7 +55,17 @@ module Faust2Ruby
         else
           lines << "process = #{generate_expression(process_def.expression)}"
           lines << ""
-          lines << "puts Ruby2Faust::Emitter.program(process)"
+
+          # Build program with imports and declares
+          lines << "prog = Ruby2Faust::Program.new(process)"
+          imports.each do |imp|
+            lines << "  .import(#{imp.inspect})" unless imp == "stdfaust.lib"
+          end
+          declares.each do |d|
+            lines << "  .declare(:#{d.key}, #{d.value.inspect})"
+          end
+          lines << ""
+          lines << "puts Ruby2Faust::Emitter.program(prog)"
         end
       end
 
