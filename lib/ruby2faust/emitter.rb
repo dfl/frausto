@@ -260,6 +260,69 @@ module Ruby2Faust
           "tgroup(\"#{node.args[0]}\", #{content})"
         end
 
+      # === ITERATION ===
+      when NodeType::FPAR
+        var, count, block = node.args
+        # Evaluate the block with each index to get the expression
+        # For emission, we generate the Faust par() syntax
+        body = emit_iteration_body(var, block, indent, pretty)
+        "par(#{var}, #{count}, #{body})"
+      when NodeType::FSEQ
+        var, count, block = node.args
+        body = emit_iteration_body(var, block, indent, pretty)
+        "seq(#{var}, #{count}, #{body})"
+      when NodeType::FSUM
+        var, count, block = node.args
+        body = emit_iteration_body(var, block, indent, pretty)
+        "sum(#{var}, #{count}, #{body})"
+      when NodeType::FPROD
+        var, count, block = node.args
+        body = emit_iteration_body(var, block, indent, pretty)
+        "prod(#{var}, #{count}, #{body})"
+
+      # === LAMBDA ===
+      when NodeType::LAMBDA
+        params, block = node.args
+        param_str = params.map(&:to_s).join(", ")
+        # Create a context with param nodes for each parameter
+        context = Object.new
+        context.extend(DSL)
+        param_dsps = params.map { |p| context.param(p) }
+        body = block.call(*param_dsps)
+        body = context.instance_exec { to_dsp(body) }
+        "\\(#{param_str}).(#{emit(body.node, indent: indent, pretty: pretty)})"
+      when NodeType::PARAM
+        node.args[0].to_s
+
+      # === TABLES ===
+      when NodeType::RDTABLE
+        size = emit(node.inputs[0], indent: indent, pretty: pretty)
+        init = emit(node.inputs[1], indent: indent, pretty: pretty)
+        ridx = emit(node.inputs[2], indent: indent, pretty: pretty)
+        "rdtable(#{size}, #{init}, #{ridx})"
+      when NodeType::RWTABLE
+        size = emit(node.inputs[0], indent: indent, pretty: pretty)
+        init = emit(node.inputs[1], indent: indent, pretty: pretty)
+        widx = emit(node.inputs[2], indent: indent, pretty: pretty)
+        wsig = emit(node.inputs[3], indent: indent, pretty: pretty)
+        ridx = emit(node.inputs[4], indent: indent, pretty: pretty)
+        "rwtable(#{size}, #{init}, #{widx}, #{wsig}, #{ridx})"
+      when NodeType::WAVEFORM
+        values = node.args.join(", ")
+        "waveform{#{values}}"
+
+      # === ADDITIONAL ROUTING ===
+      when NodeType::ROUTE
+        ins, outs, connections = node.args
+        conn_str = connections.map { |from, to| "(#{from}, #{to})" }.join(", ")
+        "route(#{ins}, #{outs}, #{conn_str})"
+      when NodeType::SELECT3
+        sel = emit(node.inputs[0], indent: indent, pretty: pretty)
+        a = emit(node.inputs[1], indent: indent, pretty: pretty)
+        b = emit(node.inputs[2], indent: indent, pretty: pretty)
+        c = emit(node.inputs[3], indent: indent, pretty: pretty)
+        "select3(#{sel}, #{a}, #{b}, #{c})"
+
       # === COMPOSITION ===
       when NodeType::SEQ
         left = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
@@ -323,6 +386,19 @@ module Ruby2Faust
       else
         raise ArgumentError, "Unknown node type: #{node.type}"
       end
+    end
+
+    # Helper to emit iteration body for par/seq/sum/prod
+    # Creates a symbolic parameter to capture the iterator variable
+    def emit_iteration_body(var, block, indent, pretty)
+      # Create a context that provides the iterator variable as a symbol
+      context = Object.new
+      context.extend(DSL)
+      # The block receives a symbolic representation of the iterator
+      iter_param = context.param(var)
+      body = block.call(iter_param)
+      body = context.instance_exec(body) { |b| to_dsp(b) }
+      emit(body.node, indent: indent, pretty: pretty)
     end
   end
 end

@@ -629,6 +629,136 @@ module Ruby2Faust
     end
 
     # =========================================================================
+    # ITERATION
+    # =========================================================================
+
+    # Parallel iteration: par(i, n, expr)
+    # @param var [Symbol] Iterator variable name
+    # @param count [Integer] Number of iterations
+    # @yield [Integer] Block receiving iteration index
+    # @return [DSP]
+    def fpar(var, count, &block)
+      raise ArgumentError, "fpar requires a block" unless block_given?
+      DSP.new(Node.new(type: NodeType::FPAR, args: [var, count, block], channels: count))
+    end
+
+    # Sequential iteration: seq(i, n, expr)
+    # @param var [Symbol] Iterator variable name
+    # @param count [Integer] Number of iterations
+    # @yield [Integer] Block receiving iteration index
+    # @return [DSP]
+    def fseq(var, count, &block)
+      raise ArgumentError, "fseq requires a block" unless block_given?
+      DSP.new(Node.new(type: NodeType::FSEQ, args: [var, count, block]))
+    end
+
+    # Summation iteration: sum(i, n, expr)
+    # @param var [Symbol] Iterator variable name
+    # @param count [Integer] Number of iterations
+    # @yield [Integer] Block receiving iteration index
+    # @return [DSP]
+    def fsum(var, count, &block)
+      raise ArgumentError, "fsum requires a block" unless block_given?
+      DSP.new(Node.new(type: NodeType::FSUM, args: [var, count, block]))
+    end
+
+    # Product iteration: prod(i, n, expr)
+    # @param var [Symbol] Iterator variable name
+    # @param count [Integer] Number of iterations
+    # @yield [Integer] Block receiving iteration index
+    # @return [DSP]
+    def fprod(var, count, &block)
+      raise ArgumentError, "fprod requires a block" unless block_given?
+      DSP.new(Node.new(type: NodeType::FPROD, args: [var, count, block]))
+    end
+
+    # =========================================================================
+    # LAMBDA
+    # =========================================================================
+
+    # Lambda expression: \(x).(body)
+    # @param params [Array<Symbol>] Parameter names
+    # @yield Block that receives parameters and returns body expression
+    # @return [DSP]
+    def flambda(*params, &block)
+      raise ArgumentError, "flambda requires a block" unless block_given?
+      DSP.new(Node.new(type: NodeType::LAMBDA, args: [params, block]))
+    end
+
+    # Parameter reference within a lambda
+    # @param name [Symbol] Parameter name
+    # @return [DSP]
+    def param(name)
+      DSP.new(Node.new(type: NodeType::PARAM, args: [name]))
+    end
+
+    # =========================================================================
+    # TABLES
+    # =========================================================================
+
+    # Read-only table: rdtable(n, init, ridx)
+    # @param size [Integer, DSP] Table size
+    # @param init [DSP] Initialization signal
+    # @param ridx [DSP] Read index
+    # @return [DSP]
+    def rdtable(size, init, ridx)
+      size = to_dsp(size)
+      init = to_dsp(init)
+      ridx = to_dsp(ridx)
+      DSP.new(Node.new(type: NodeType::RDTABLE, inputs: [size.node, init.node, ridx.node]))
+    end
+
+    # Read/write table: rwtable(n, init, widx, wsig, ridx)
+    # @param size [Integer, DSP] Table size
+    # @param init [DSP] Initialization signal
+    # @param widx [DSP] Write index
+    # @param wsig [DSP] Write signal
+    # @param ridx [DSP] Read index
+    # @return [DSP]
+    def rwtable(size, init, widx, wsig, ridx)
+      size = to_dsp(size)
+      init = to_dsp(init)
+      widx = to_dsp(widx)
+      wsig = to_dsp(wsig)
+      ridx = to_dsp(ridx)
+      DSP.new(Node.new(type: NodeType::RWTABLE, inputs: [size.node, init.node, widx.node, wsig.node, ridx.node]))
+    end
+
+    # Waveform constant table: waveform{v1, v2, ...}
+    # @param values [Array<Numeric>] Table values
+    # @return [DSP]
+    def waveform(*values)
+      DSP.new(Node.new(type: NodeType::WAVEFORM, args: values))
+    end
+
+    # =========================================================================
+    # ADDITIONAL ROUTING
+    # =========================================================================
+
+    # Route signals: route(ins, outs, connections)
+    # @param ins [Integer] Number of inputs
+    # @param outs [Integer] Number of outputs
+    # @param connections [Array<Array<Integer>>] Connection pairs [[from, to], ...]
+    # @return [DSP]
+    def route(ins, outs, connections)
+      DSP.new(Node.new(type: NodeType::ROUTE, args: [ins, outs, connections], channels: outs))
+    end
+
+    # 3-way selector: select3(sel, a, b, c)
+    # @param sel [DSP] Selector (0, 1, or 2)
+    # @param a [DSP] First signal
+    # @param b [DSP] Second signal
+    # @param c [DSP] Third signal
+    # @return [DSP]
+    def select3(sel, a, b, c)
+      sel = to_dsp(sel)
+      a = to_dsp(a)
+      b = to_dsp(b)
+      c = to_dsp(c)
+      DSP.new(Node.new(type: NodeType::SELECT3, inputs: [sel.node, a.node, b.node, c.node], channels: a.node.channels))
+    end
+
+    # =========================================================================
     # UTILITY
     # =========================================================================
 

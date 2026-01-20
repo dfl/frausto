@@ -145,6 +145,25 @@ module Ruby2Faust
     FEEDBACK = :feedback  # ~
     REC      = :rec       # letrec style
 
+    # === Iteration ===
+    FPAR  = :fpar   # par(i, n, expr)
+    FSEQ  = :fseq   # seq(i, n, expr)
+    FSUM  = :fsum   # sum(i, n, expr)
+    FPROD = :fprod  # prod(i, n, expr)
+
+    # === Lambda ===
+    LAMBDA = :lambda  # \(x).(body)
+    PARAM  = :param   # Parameter reference
+
+    # === Tables ===
+    RDTABLE  = :rdtable   # rdtable(n, init, ridx)
+    RWTABLE  = :rwtable   # rwtable(n, init, widx, wsig, ridx)
+    WAVEFORM = :waveform  # waveform{...}
+
+    # === Additional Routing ===
+    ROUTE   = :route    # route(ins, outs, connections)
+    SELECT3 = :select3  # select3(sel, a, b, c)
+
     # === Utility ===
     WIRE    = :wire    # _
     CUT     = :cut     # !

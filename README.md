@@ -175,13 +175,36 @@ smoo           # Default 5ms smooth
 ### Selectors
 ```ruby
 select2(cond, a, b)          # 2-way select
+select3(sel, a, b, c)        # 3-way select
 selectn(n, index, *signals)  # N-way select
 ```
 
-### Routing (si.)
+### Iteration
+Ruby blocks map to Faust's iteration constructs:
 ```ruby
-bus(n)    # N parallel wires
-block(n)  # Terminate N signals
+fpar(:i, 4) { |i| osc(i * 100) }   # par(i, 4, osc(i*100))
+fseq(:i, 3) { |i| lp(1000) }       # seq(i, 3, fi.lowpass(1, 1000))
+fsum(:i, 4) { |i| osc(i * 100) }   # sum(i, 4, osc(i*100))
+fprod(:i, 2) { |i| gain(0.5) }     # prod(i, 2, *(0.5))
+```
+
+### Lambda
+```ruby
+flambda(:x) { |x| x * 2 }    # \(x).(x * 2)
+```
+
+### Tables
+```ruby
+waveform(0, 0.5, 1, 0.5)              # waveform{0, 0.5, 1, 0.5}
+rdtable(size, init, ridx)             # Read-only table
+rwtable(size, init, widx, wsig, ridx) # Read/write table
+```
+
+### Routing (si./ro.)
+```ruby
+bus(n)                           # N parallel wires
+block(n)                         # Terminate N signals
+route(ins, outs, [[1,2],[2,1]])  # Signal routing matrix
 ```
 
 ### Reverbs (re.)
