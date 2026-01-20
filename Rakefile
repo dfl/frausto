@@ -9,3 +9,20 @@ Rake::TestTask.new(:test) do |t|
 end
 
 task default: :test
+
+desc "Build the gem into the pkg directory"
+task :build do
+  FileUtils.mkdir_p("pkg")
+  system("gem build ruby2faust.gemspec -o pkg/ruby2faust.gem")
+end
+
+desc "Build and install the gem locally for testing"
+task install: :build do
+  system("gem install pkg/ruby2faust.gem")
+end
+
+desc "Uninstall, rebuild, and reinstall the gem"
+task :reinstall do
+  system("gem uninstall ruby2faust -x --force") # -x removes executables, --force skips confirmation
+  Rake::Task[:install].invoke
+end

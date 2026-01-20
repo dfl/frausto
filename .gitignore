@@ -1,0 +1,16 @@
+# Built gem artifacts
+pkg/
+*.gem
+
+# Bundler
+.bundle/
+vendor/bundle/
+
+# IDE/Editor
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store

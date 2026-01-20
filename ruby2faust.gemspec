@@ -5,12 +5,12 @@ require_relative "lib/ruby2faust/version"
 Gem::Specification.new do |spec|
   spec.name = "ruby2faust"
   spec.version = Ruby2Faust::VERSION
-  spec.authors = ["Your Name"]
-  spec.email = ["you@example.com"]
+  spec.authors = ["David Lowenfels"]
+  spec.email = ["dfl@alum.mit.edu"]
 
   spec.summary = "A Ruby DSL that generates Faust DSP code"
   spec.description = "Build DSP graphs in Ruby, emit valid Faust source. Ruby describes; Faust executes."
-  spec.homepage = "https://github.com/yourusername/ruby2faust"
+  spec.homepage = "https://github.com/dfl/ruby2faust"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
 
