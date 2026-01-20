@@ -22,6 +22,10 @@ module Ruby2Faust
 
   # Node type constants - comprehensive Faust library coverage
   module NodeType
+    # === Comments/Documentation ===
+    COMMENT = :comment  # // line comment
+    DOC     = :doc      # /* inline comment */ attached to node
+
     # === Oscillators (os.) ===
     OSC       = :osc        # os.osc(freq) - sine
     SAW       = :saw        # os.sawtooth(freq)

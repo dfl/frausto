@@ -48,6 +48,13 @@ module Ruby2Faust
     def channels
       node.channels
     end
+
+    # Attach a Faust comment to this node
+    # @param text [String] Comment text
+    # @return [DSP] New DSP with comment wrapper
+    def doc(text)
+      DSP.new(Node.new(type: NodeType::DOC, args: [text], inputs: [node], channels: node.channels))
+    end
   end
 
   # DSL module with comprehensive Faust library primitives.
@@ -62,6 +69,17 @@ module Ruby2Faust
       when Symbol then literal(value.to_s)
       else raise ArgumentError, "Cannot convert #{value.class} to DSP"
       end
+    end
+
+    # =========================================================================
+    # COMMENTS / DOCUMENTATION
+    # =========================================================================
+
+    # Line comment (appears on its own line in Faust output)
+    # @param text [String] Comment text
+    # @return [DSP] Comment node
+    def doc(text)
+      DSP.new(Node.new(type: NodeType::COMMENT, args: [text], channels: 0))
     end
 
     # =========================================================================
@@ -509,8 +527,21 @@ module Ruby2Faust
     # UI CONTROLS
     # =========================================================================
 
-    def slider(name, init:, min:, max:, step: 0.01)
-      DSP.new(Node.new(type: NodeType::SLIDER, args: [name, init, min, max, step]))
+    # Build Faust metadata string from kwargs
+    def self.build_metadata(name, order: nil, style: nil, unit: nil, tooltip: nil, scale: nil, **_)
+      meta = ""
+      meta += "[#{order}]" if order
+      meta += "[style:#{style}]" if style
+      meta += "[unit:#{unit}]" if unit
+      meta += "[tooltip:#{tooltip}]" if tooltip
+      meta += "[scale:#{scale}]" if scale
+      # If name already has metadata, append; otherwise prefix
+      name.to_s.include?("[") ? name.to_s : "#{meta}#{name}"
+    end
+
+    def slider(name, init:, min:, max:, step: 0.01, **meta)
+      full_name = DSL.build_metadata(name, **meta)
+      DSP.new(Node.new(type: NodeType::SLIDER, args: [full_name, init, min, max, step]))
     end
 
     def vslider(name, init:, min:, max:, step: 0.01)

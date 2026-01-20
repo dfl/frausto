@@ -151,6 +151,30 @@ hgroup("name", content)
 vgroup("name", content)
 ```
 
+**Slider metadata kwargs:**
+```ruby
+slider("freq", init: 440, min: 20, max: 2000,
+  style: :knob,     # [style:knob]
+  unit: "Hz",       # [unit:Hz]
+  tooltip: "Freq",  # [tooltip:Freq]
+  order: 0,         # [0] (UI ordering)
+  scale: :log       # [scale:log]
+)
+```
+
+Or use inline Faust metadata:
+```ruby
+slider("[0]freq[style:knob][unit:Hz]", init: 440, min: 20, max: 2000)
+```
+
+### Comments / Documentation
+```ruby
+# Inline comment attached to a node
+saw(freq).doc("Main oscillator")
+
+# Output: /* Main oscillator */ os.sawtooth(freq)
+```
+
 ### Composition Operators
 
 | Ruby        | Faust | Meaning    |

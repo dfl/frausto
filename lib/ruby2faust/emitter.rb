@@ -31,6 +31,13 @@ module Ruby2Faust
     def emit(node)
       case node.type
 
+      # === COMMENTS ===
+      when NodeType::COMMENT
+        "// #{node.args[0]}\n"
+      when NodeType::DOC
+        # Inline comment wrapped around the inner expression
+        "/* #{node.args[0]} */ #{emit(node.inputs[0])}"
+
       # === OSCILLATORS ===
       when NodeType::OSC
         "os.osc(#{emit(node.inputs[0])})"
