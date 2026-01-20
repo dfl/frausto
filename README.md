@@ -20,7 +20,8 @@ gem 'ruby2faust'
 require 'ruby2faust'
 include Ruby2Faust::DSL
 
-process = osc(440).then(gain(0.3))
+# Use >> for signal flow (alias for .then)
+process = osc(440) >> lp(800) >> gain(0.3)
 puts Ruby2Faust::Emitter.program(process)
 ```
 
@@ -28,7 +29,7 @@ Output:
 ```faust
 import("stdfaust.lib");
 
-process = (os.osc(440) : *(0.3));
+process = ((os.osc(440) : fi.lowpass(1, 800)) : *(0.3));
 ```
 
 ## DSL Reference
@@ -177,15 +178,27 @@ saw(freq).doc("Main oscillator")
 
 ### Composition Operators
 
-| Ruby        | Faust | Meaning    |
-|-------------|-------|------------|
-| `.then(b)`  | `:`   | Sequential |
-| `.par(b)`   | `,`   | Parallel   |
-| `.split(*bs)` | `<:` | Fan-out   |
-| `.merge(b)` | `:>`  | Fan-in     |
-| `.feedback(b)` | `~` | Feedback  |
+| Method | Operator | Faust | Meaning |
+|--------|----------|-------|---------|
+| `.then(b)` | `>>` | `:` | Sequential |
+| `.par(b)` | `\|` | `,` | Parallel |
+| `.split(*bs)` | - | `<:` | Fan-out |
+| `.merge(b)` | - | `:>` | Fan-in |
+| `.feedback(b)` | `~` | `~` | Feedback |
 
-Aliases: `>>` for `.then`, `|` for `.par`
+**Examples:**
+```ruby
+# Sequential (signal chain)
+osc(440) >> lp(800) >> gain(0.3)
+
+# Parallel (stereo)
+left = osc(440) >> gain(0.3)
+right = osc(442) >> gain(0.3)
+stereo = left | right
+
+# Feedback (echo)
+echo = wire ~ (delay(44100, 22050) >> gain(0.5))
+```
 
 ### Constants
 ```ruby
@@ -219,15 +232,12 @@ require 'ruby2faust'
 include Ruby2Faust::DSL
 
 gate = button("gate")
-freq = slider("freq", init: 220, min: 20, max: 2000).then(smoo)
-cutoff = slider("cutoff", init: 1000, min: 100, max: 8000).then(smoo)
+freq = slider("freq", init: 220, min: 20, max: 2000, style: :knob) >> smoo
+cutoff = slider("cutoff", init: 1000, min: 100, max: 8000, style: :knob) >> smoo
 
 env = adsr(0.01, 0.2, 0.6, 0.3, gate)
 
-process = saw(freq)
-  .then(resonlp(cutoff, 4, 1))
-  .then(gain(env))
-  .then(panner(0.5))
+process = saw(freq) >> resonlp(cutoff, 4, 1) >> gain(env) >> panner(0.5)
 
 prog = Ruby2Faust::Program.new(process)
   .declare(:name, "SubSynth")
