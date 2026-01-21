@@ -26,3 +26,8 @@ task :reinstall do
   system("gem uninstall frausto -x --force") # -x removes executables, --force skips confirmation
   Rake::Task[:install].invoke
 end
+
+desc "Build and push the gem to RubyGems"
+task release: :build do
+  system("gem push pkg/frausto.gem")
+end
