@@ -179,11 +179,12 @@ class Faust2Ruby::GeneratorTest < Minitest::Test
   end
 
   def test_generate_complex_expression
+    # signal : *(x) becomes idiomatic Ruby: x * signal
     source = 'process = os.osc(hslider("freq", 440, 20, 20000, 1)) : *(0.5);'
     result = generate(source)
     assert_includes result, "osc"
     assert_includes result, "slider"
-    assert_includes result, ">>"
+    assert_includes result, "0.5 *"
   end
 
   def test_numeric_literals_wrapped_for_composition

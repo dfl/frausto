@@ -80,35 +80,36 @@ class EmitterTest < Minitest::Test
 
   def test_emit_seq
     dsp = osc(440).then(gain(0.3))
-    assert_equal "(os.osc(440) : *(0.3))", emit(dsp)
+    assert_equal "os.osc(440) : *(0.3)", emit(dsp)
   end
 
   def test_emit_par
     dsp = osc(440).par(osc(880))
-    assert_equal "(os.osc(440), os.osc(880))", emit(dsp)
+    assert_equal "os.osc(440), os.osc(880)", emit(dsp)
   end
 
   def test_emit_split
     dsp = osc(440).split(gain(0.5), gain(0.3))
-    assert_equal "(os.osc(440) <: *(0.5), *(0.3))", emit(dsp)
+    assert_equal "os.osc(440) <: *(0.5), *(0.3)", emit(dsp)
   end
 
   def test_emit_merge
     dsp = osc(440).par(noise).merge(add)
-    assert_equal "((os.osc(440), no.noise) :> +)", emit(dsp)
+    assert_equal "(os.osc(440), no.noise) :> +", emit(dsp)
   end
 
   def test_emit_feedback
     dsp = wire.feedback(gain(0.99))
-    assert_equal "(_ ~ *(0.99))", emit(dsp)
+    assert_equal "_ ~ *(0.99)", emit(dsp)
   end
 
   def test_emit_chained
     dsp = osc(440)
       .then(lp(800))
       .then(gain(0.3))
-    
-    expected = "((os.osc(440) : fi.lowpass(1, 800)) : *(0.3))"
+
+    # No unnecessary parens - : is left-associative
+    expected = "os.osc(440) : fi.lowpass(1, 800) : *(0.3)"
     assert_equal expected, emit(dsp)
   end
 

@@ -12,7 +12,7 @@ class IntegrationTest < Minitest::Test
     end
 
     assert_includes code, 'import("stdfaust.lib");'
-    assert_includes code, "process = (os.osc(440) : *(0.3));"
+    assert_includes code, "process = os.osc(440) : *(0.3);"
   end
 
   def test_generate_with_slider

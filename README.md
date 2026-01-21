@@ -24,26 +24,37 @@ gem 'frausto'
 - **[ruby2faust](ruby2faust.md)** - Ruby DSL that generates Faust DSP code
 - **[faust2ruby](faust2ruby.md)** - Convert Faust DSP code to Ruby DSL
 
-## Quick Example
+## Quick Examples
 
 ```ruby
 require 'ruby2faust'
 
 code = Ruby2Faust.generate do
   freq = 60.midi >> smoo
-  (osc(freq) + noise * 0.1) >> lp(2000) * -6.db
+  -6.db * ((osc(freq) + 0.1 * noise) >> lp(2000))
 end
 
 puts code
 # => import("stdfaust.lib");
-#    process = ((os.osc((ba.midikey2hz(60) : si.smoo)) + (no.noise * 0.1)) : fi.lowpass(1, 2000) : *(ba.db2linear(-6)));
+#    process = os.osc(ba.midikey2hz(60) : si.smoo) + (no.noise : *(0.1)) : fi.lowpass(1, 2000) : *(ba.db2linear(-6));
+
+# Use pretty: true for readable output
+puts Ruby2Faust.generate(pretty: true) { -6.db * ((osc(60.midi >> smoo) + 0.1 * noise) >> lp(2000)) }
+# => import("stdfaust.lib");
+#    process =
+#      os.osc(
+#        ba.midikey2hz(60)
+#        : si.smoo
+#      ) + (no.noise : *(0.1))
+#      : fi.lowpass(1, 2000)
+#      : *(ba.db2linear(-6));
 ```
 
 ```ruby
 require 'faust2ruby'
 
 ruby_code = Faust2Ruby.to_ruby('process = os.osc(440) : *(0.5);')
-# => "osc(440) >> gain(0.5)"
+# => "0.5 * osc(440)"
 ```
 
 ## License

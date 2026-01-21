@@ -7,33 +7,33 @@ class RubyismTest < Minitest::Test
   include Ruby2Faust::DSL
 
   def test_signal_arithmetic
-    # Test + (mix)
+    # Test + (mix) - no outer parens needed at top level
     expr = osc(440) + noise
-    assert_equal "(os.osc(440) + no.noise)", Ruby2Faust::Emitter.emit(expr.node)
+    assert_equal "os.osc(440) + no.noise", Ruby2Faust::Emitter.emit(expr.node)
 
     # Test + with numeric on left (via coerce)
     expr = 1 + osc(440)
-    assert_equal "(1 + os.osc(440))", Ruby2Faust::Emitter.emit(expr.node)
+    assert_equal "1 + os.osc(440)", Ruby2Faust::Emitter.emit(expr.node)
 
     # Test - (sub)
     expr = osc(440) - osc(442)
-    assert_equal "(os.osc(440) - os.osc(442))", Ruby2Faust::Emitter.emit(expr.node)
+    assert_equal "os.osc(440) - os.osc(442)", Ruby2Faust::Emitter.emit(expr.node)
 
     # Test - with numeric on left (via coerce)
     expr = 1 - osc(440)
-    assert_equal "(1 - os.osc(440))", Ruby2Faust::Emitter.emit(expr.node)
+    assert_equal "1 - os.osc(440)", Ruby2Faust::Emitter.emit(expr.node)
 
-    # Test * (mul/gain)
+    # Test * (mul/gain) - emits idiomatic Faust: signal : *(scalar)
     expr = osc(440) * 0.5
-    assert_equal "(os.osc(440) * 0.5)", Ruby2Faust::Emitter.emit(expr.node)
+    assert_equal "os.osc(440) : *(0.5)", Ruby2Faust::Emitter.emit(expr.node)
 
-    # Test * with numeric on left (via coerce)
+    # Test * with numeric on left (via coerce) - normalized to signal : *(scalar)
     expr = 0.5 * osc(440)
-    assert_equal "(0.5 * os.osc(440))", Ruby2Faust::Emitter.emit(expr.node)
+    assert_equal "os.osc(440) : *(0.5)", Ruby2Faust::Emitter.emit(expr.node)
 
-    # Test / (div)
+    # Test / (div) - emits idiomatic Faust: signal : /(scalar)
     expr = osc(440) / 2
-    assert_equal "(os.osc(440) / 2)", Ruby2Faust::Emitter.emit(expr.node)
+    assert_equal "os.osc(440) : /(2)", Ruby2Faust::Emitter.emit(expr.node)
 
     # Test negate
     expr = -osc(440)
@@ -49,24 +49,25 @@ class RubyismTest < Minitest::Test
   end
 
   def test_block_ui_groups
-    # Test hgroup with block
+    # Test hgroup with block - content doesn't need extra parens
     expr = hgroup("Master") do
       osc(440) + noise
     end
-    assert_equal 'hgroup("Master", (os.osc(440) + no.noise))', Ruby2Faust::Emitter.emit(expr.node)
+    assert_equal 'hgroup("Master", os.osc(440) + no.noise)', Ruby2Faust::Emitter.emit(expr.node)
 
     # Test nested vgroup with block
     expr = hgroup("Rack") do
       vgroup("Osc") { osc(440) } | vgroup("Filter") { lp(1000) }
     end
-    assert_equal 'hgroup("Rack", (vgroup("Osc", os.osc(440)), vgroup("Filter", fi.lowpass(1, 1000))))', Ruby2Faust::Emitter.emit(expr.node)
+    assert_equal 'hgroup("Rack", vgroup("Osc", os.osc(440)), vgroup("Filter", fi.lowpass(1, 1000)))', Ruby2Faust::Emitter.emit(expr.node)
   end
 
   def test_ruby2faust_generate
     code = Ruby2Faust.generate do
       (osc(440) + noise) * 0.3
     end
-    assert_match(/process = \(\(os.osc\(440\) \+ no.noise\) \* 0.3\);/, code)
+    # + has higher precedence than : in Faust, so no explicit parens needed
+    assert_match(/process = os.osc\(440\) \+ no.noise : \*\(0.3\);/, code)
   end
 
   def test_program_with_block
@@ -76,7 +77,7 @@ class RubyismTest < Minitest::Test
     end
     code = Ruby2Faust::Emitter.program(prog)
     assert_match(/declare name "Test";/, code)
-    assert_match(/process = \(os.osc\(440\) \* 0.5\);/, code)
+    assert_match(/process = os.osc\(440\) : \*\(0.5\);/, code)
   end
 
   def test_pretty_printing
@@ -84,7 +85,6 @@ class RubyismTest < Minitest::Test
       hgroup("Synth") { osc(440) >> gain(0.5) }
     end
     assert_match(/hgroup\("Synth",/, code)
-    assert_match(/\n  \(/, code)
     assert_match(/:/, code)
   end
 end

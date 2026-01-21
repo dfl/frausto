@@ -347,7 +347,17 @@ module Faust2Ruby
 
       case node.op
       when :SEQ
-        "(#{left} >> #{right})"
+        # Idiomatic Ruby: signal : *(x) becomes x * signal
+        if node.right.is_a?(AST::FunctionCall) && node.right.name == "*" && node.right.args.length == 1
+          arg = generate_expression(node.right.args[0])
+          "(#{arg} * #{left})"
+        # Idiomatic Ruby: signal : /(x) becomes signal / x
+        elsif node.right.is_a?(AST::FunctionCall) && node.right.name == "/" && node.right.args.length == 1
+          arg = generate_expression(node.right.args[0])
+          "(#{left} / #{arg})"
+        else
+          "(#{left} >> #{right})"
+        end
       when :PAR
         "(#{left} | #{right})"
       when :SPLIT
@@ -462,6 +472,32 @@ module Faust2Ruby
       when :selectn
         # ba.selectn(n, idx, ...) -> selectn(n, idx, ...)
         "selectn(#{args.join(', ')})"
+
+      when :db2linear
+        # ba.db2linear(-6) -> -6.db (idiomatic Ruby)
+        # Handle both "-6" and "(-6)" forms
+        arg = args[0]&.gsub(/\A\(|\)\z/, '') # strip outer parens
+        if args.length == 1 && arg&.match?(/\A-?\d+\.?\d*\z/)
+          "#{arg}.db"
+        else
+          "db2linear(#{args.join(', ')})"
+        end
+
+      when :midi2hz
+        # ba.midikey2hz(60) -> 60.midi (idiomatic Ruby)
+        if args.length == 1 && args[0].match?(/\A\d+\.?\d*\z/)
+          "#{args[0]}.midi"
+        else
+          "midi2hz(#{args.join(', ')})"
+        end
+
+      when :sec2samp
+        # ba.sec2samp(0.1) -> 0.1.sec (idiomatic Ruby)
+        if args.length == 1 && args[0].match?(/\A\d+\.?\d*\z/)
+          "#{args[0]}.sec"
+        else
+          "sec2samp(#{args.join(', ')})"
+        end
 
       else
         # Standard call - check for partial application

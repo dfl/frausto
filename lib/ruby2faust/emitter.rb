@@ -9,6 +9,41 @@ module Ruby2Faust
 
     DEFAULT_IMPORTS = ["stdfaust.lib"].freeze
 
+    # Scalar types produce constant values (not signal processors)
+    SCALAR_TYPES = [
+      NodeType::DB2LINEAR, NodeType::LINEAR2DB,
+      NodeType::MIDI2HZ, NodeType::HZ2MIDI,
+      NodeType::SEC2SAMP, NodeType::SAMP2SEC
+    ].freeze
+
+    # Operator precedence (higher = binds tighter)
+    PREC = {
+      seq: 1,      # :
+      par: 2,      # ,
+      split: 3,    # <:
+      merge: 3,    # :>
+      rec: 4,      # ~
+      add: 5,      # +
+      sub: 5,      # -
+      mul: 6,      # *
+      div: 6,      # /
+      mod: 6,      # %
+      cmp: 7,      # < > <= >= == !=
+      primary: 100 # literals, function calls - never need parens
+    }.freeze
+
+    # Check if a node represents a scalar/constant value
+    def scalar?(node)
+      return true if SCALAR_TYPES.include?(node.type)
+      return true if node.type == NodeType::LITERAL && node.args[0].to_s.match?(/\A-?\d+\.?\d*\z/)
+      false
+    end
+
+    # Wrap expression in parens if needed based on precedence
+    def wrap(expr, my_prec, parent_prec)
+      my_prec < parent_prec ? "(#{expr})" : expr
+    end
+
     def program(process, imports: nil, declarations: {}, pretty: false)
       if process.is_a?(Program)
         node = process.process.is_a?(DSP) ? process.process.node : process.process
@@ -25,12 +60,12 @@ module Ruby2Faust
       imports.each { |lib| lines << "import(\"#{lib}\");" }
       lines << ""
       
-      body = emit(node, pretty: pretty)
+      body = emit(node, pretty: pretty, prec: 0)
       lines << "process = #{body};"
       lines.join("\n") + "\n"
     end
 
-    def emit(node, indent: 0, pretty: false)
+    def emit(node, indent: 0, pretty: false, prec: 0)
       sp = "  " * indent
       next_sp = "  " * (indent + 1)
 
@@ -173,13 +208,64 @@ module Ruby2Faust
       when NodeType::GAIN
         "*(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
       when NodeType::ADD
-        node.inputs.count == 2 ? "(#{emit(node.inputs[0], indent: indent, pretty: pretty)} + #{emit(node.inputs[1], indent: indent, pretty: pretty)})" : "+"
+        if node.inputs.count == 2
+          my_prec = PREC[:add]
+          left = emit(node.inputs[0], indent: indent, pretty: pretty, prec: my_prec)
+          right = emit(node.inputs[1], indent: indent, pretty: pretty, prec: my_prec + 1)
+          wrap("#{left} + #{right}", my_prec, prec)
+        else
+          "+"
+        end
       when NodeType::MUL
-        node.inputs.count == 2 ? "(#{emit(node.inputs[0], indent: indent, pretty: pretty)} * #{emit(node.inputs[1], indent: indent, pretty: pretty)})" : "*"
+        if node.inputs.count == 2
+          left_node, right_node = node.inputs
+          # Normalize: signal : *(scalar) - idiomatic Faust gain (uses SEQ precedence)
+          if scalar?(right_node) && !scalar?(left_node)
+            my_prec = PREC[:seq]
+            left = emit(left_node, indent: indent, pretty: pretty, prec: my_prec)
+            right = emit(right_node, indent: indent, pretty: pretty, prec: PREC[:primary])
+            wrap("#{left} : *(#{right})", my_prec, prec)
+          elsif scalar?(left_node) && !scalar?(right_node)
+            my_prec = PREC[:seq]
+            left = emit(right_node, indent: indent, pretty: pretty, prec: my_prec)
+            right = emit(left_node, indent: indent, pretty: pretty, prec: PREC[:primary])
+            wrap("#{left} : *(#{right})", my_prec, prec)
+          else
+            my_prec = PREC[:mul]
+            left = emit(left_node, indent: indent, pretty: pretty, prec: my_prec)
+            right = emit(right_node, indent: indent, pretty: pretty, prec: my_prec + 1)
+            wrap("#{left} * #{right}", my_prec, prec)
+          end
+        else
+          "*"
+        end
       when NodeType::SUB
-        node.inputs.count == 2 ? "(#{emit(node.inputs[0], indent: indent, pretty: pretty)} - #{emit(node.inputs[1], indent: indent, pretty: pretty)})" : "-"
+        if node.inputs.count == 2
+          my_prec = PREC[:sub]
+          left = emit(node.inputs[0], indent: indent, pretty: pretty, prec: my_prec)
+          right = emit(node.inputs[1], indent: indent, pretty: pretty, prec: my_prec + 1)
+          wrap("#{left} - #{right}", my_prec, prec)
+        else
+          "-"
+        end
       when NodeType::DIV
-        node.inputs.count == 2 ? "(#{emit(node.inputs[0], indent: indent, pretty: pretty)} / #{emit(node.inputs[1], indent: indent, pretty: pretty)})" : "/"
+        if node.inputs.count == 2
+          left_node, right_node = node.inputs
+          # Idiomatic Faust: signal : /(scalar) (uses SEQ precedence)
+          if scalar?(right_node) && !scalar?(left_node)
+            my_prec = PREC[:seq]
+            left = emit(left_node, indent: indent, pretty: pretty, prec: my_prec)
+            right = emit(right_node, indent: indent, pretty: pretty, prec: PREC[:primary])
+            wrap("#{left} : /(#{right})", my_prec, prec)
+          else
+            my_prec = PREC[:div]
+            left = emit(left_node, indent: indent, pretty: pretty, prec: my_prec)
+            right = emit(right_node, indent: indent, pretty: pretty, prec: my_prec + 1)
+            wrap("#{left} / #{right}", my_prec, prec)
+          end
+        else
+          "/"
+        end
       when NodeType::MOD
         "(#{emit(node.inputs[0], indent: indent, pretty: pretty)} % #{emit(node.inputs[1], indent: indent, pretty: pretty)})"
 
@@ -436,45 +522,57 @@ module Ruby2Faust
 
       # === COMPOSITION ===
       when NodeType::SEQ
-        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
-        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty)
-        if pretty
-          "(\n#{next_sp}#{left}\n#{next_sp}: #{right}\n#{sp})"
+        my_prec = PREC[:seq]
+        # Left child: same precedence (left-associative, no parens needed)
+        # Right child: higher precedence required (would need parens if it's another SEQ)
+        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty, prec: my_prec)
+        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty, prec: my_prec + 1)
+        expr = if pretty
+          "\n#{next_sp}#{left}\n#{next_sp}: #{right}\n#{sp}"
         else
-          "(#{left} : #{right})"
+          "#{left} : #{right}"
         end
+        wrap(expr, my_prec, prec)
       when NodeType::PAR
-        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
-        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty)
-        if pretty
-          "(\n#{next_sp}#{left},\n#{next_sp}#{right}\n#{sp})"
+        my_prec = PREC[:par]
+        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty, prec: my_prec)
+        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty, prec: my_prec + 1)
+        expr = if pretty
+          "\n#{next_sp}#{left},\n#{next_sp}#{right}\n#{sp}"
         else
-          "(#{left}, #{right})"
+          "#{left}, #{right}"
         end
+        wrap(expr, my_prec, prec)
       when NodeType::SPLIT
-        source = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
-        targets = node.inputs[1..].map { |n| emit(n, indent: indent + 1, pretty: pretty) }
-        if pretty
-          "(\n#{next_sp}#{source}\n#{next_sp}<: #{targets.join(",\n#{next_sp}   ")}\n#{sp})"
+        my_prec = PREC[:split]
+        source = emit(node.inputs[0], indent: indent + 1, pretty: pretty, prec: my_prec)
+        targets = node.inputs[1..].map { |n| emit(n, indent: indent + 1, pretty: pretty, prec: my_prec + 1) }
+        expr = if pretty
+          "\n#{next_sp}#{source}\n#{next_sp}<: #{targets.join(",\n#{next_sp}   ")}\n#{sp}"
         else
-          "(#{source} <: #{targets.join(", ")})"
+          "#{source} <: #{targets.join(", ")}"
         end
+        wrap(expr, my_prec, prec)
       when NodeType::MERGE
-        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
-        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty)
-        if pretty
-          "(\n#{next_sp}#{left}\n#{next_sp}:> #{right}\n#{sp})"
+        my_prec = PREC[:merge]
+        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty, prec: my_prec)
+        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty, prec: my_prec + 1)
+        expr = if pretty
+          "\n#{next_sp}#{left}\n#{next_sp}:> #{right}\n#{sp}"
         else
-          "(#{left} :> #{right})"
+          "#{left} :> #{right}"
         end
+        wrap(expr, my_prec, prec)
       when NodeType::FEEDBACK
-        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty)
-        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty)
-        if pretty
-          "(\n#{next_sp}#{left}\n#{next_sp}~ #{right}\n#{sp})"
+        my_prec = PREC[:rec]
+        left = emit(node.inputs[0], indent: indent + 1, pretty: pretty, prec: my_prec)
+        right = emit(node.inputs[1], indent: indent + 1, pretty: pretty, prec: my_prec + 1)
+        expr = if pretty
+          "\n#{next_sp}#{left}\n#{next_sp}~ #{right}\n#{sp}"
         else
-          "(#{left} ~ #{right})"
+          "#{left} ~ #{right}"
         end
+        wrap(expr, my_prec, prec)
 
       # === UTILITY ===
       when NodeType::WIRE
