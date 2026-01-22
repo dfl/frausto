@@ -531,7 +531,7 @@ module Faust2Ruby
         min = generate_expression(node.min)
         max = generate_expression(node.max)
         step = generate_expression(node.step)
-        "slider(#{node.label.inspect}, init: #{init}, min: #{min}, max: #{max}, step: #{step})"
+        "hslider(#{node.label.inspect}, init: #{init}, min: #{min}, max: #{max}, step: #{step})"
 
       when :vslider
         init = generate_expression(node.init)

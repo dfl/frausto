@@ -60,8 +60,9 @@ class DSLTest < Minitest::Test
   end
 
   def test_slider_creates_node
+    # slider is an alias for hslider
     dsp = slider("freq", init: 440, min: 20, max: 20000)
-    assert_equal :slider, dsp.node.type
+    assert_equal :hslider, dsp.node.type
     assert_equal ["freq", 440, 20, 20000, 0.01], dsp.node.args
   end
 

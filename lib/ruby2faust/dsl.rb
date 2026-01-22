@@ -894,13 +894,15 @@ module Ruby2Faust
       name.to_s.include?("[") ? name.to_s : "#{meta}#{name}"
     end
 
-    def slider(name, init:, min:, max:, step: 0.01, **meta)
+    def hslider(name, init:, min:, max:, step: 0.01, **meta)
       full_name = DSL.build_metadata(name, **meta)
-      DSP.new(Node.new(type: NodeType::SLIDER, args: [full_name, init, min, max, step]))
+      DSP.new(Node.new(type: NodeType::HSLIDER, args: [full_name, init, min, max, step]))
     end
+    alias slider hslider
 
-    def vslider(name, init:, min:, max:, step: 0.01)
-      DSP.new(Node.new(type: NodeType::VSLIDER, args: [name, init, min, max, step]))
+    def vslider(name, init:, min:, max:, step: 0.01, **meta)
+      full_name = DSL.build_metadata(name, **meta)
+      DSP.new(Node.new(type: NodeType::VSLIDER, args: [full_name, init, min, max, step]))
     end
 
     def nentry(name, init:, min:, max:, step: 1)

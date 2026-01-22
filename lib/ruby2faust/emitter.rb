@@ -424,7 +424,7 @@ module Ruby2Faust
         "sp.panner(#{emit(node.inputs[0], indent: indent, pretty: pretty)})"
 
       # === UI CONTROLS ===
-      when NodeType::SLIDER
+      when NodeType::HSLIDER
         name, init, min, max, step = node.args
         "hslider(\"#{name}\", #{init}, #{min}, #{max}, #{step})"
       when NodeType::VSLIDER

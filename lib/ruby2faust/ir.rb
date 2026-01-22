@@ -184,7 +184,7 @@ module Ruby2Faust
     PANNER = :panner  # sp.panner(pan) - stereo pan
 
     # === UI Controls ===
-    SLIDER   = :slider
+    HSLIDER  = :hslider
     VSLIDER  = :vslider
     NENTRY   = :nentry
     BUTTON   = :button
