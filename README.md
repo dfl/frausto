@@ -30,8 +30,9 @@ gem 'frausto'
 require 'ruby2faust'
 
 code = Ruby2Faust.generate do
-  freq = 60.midi >> smoo
-  -6.db * ((osc(freq) + 0.1 * noise) >> lp(2000))
+  freq = hslider("freq", init: 440, min: 100, max: 2000, step: 1) >> smoo
+  amp = hslider("amp", init: 0.5, min: 0, max: 1, step: 0.01) >> smoo
+  osc(freq) >> lp(2000) >> gain(amp)
 end
 
 puts code
@@ -39,11 +40,14 @@ puts code
 #
 # process =
 #   os.osc(
-#     ba.midikey2hz(60)
+#     hslider("freq", 440, 100, 2000, 1)
 #     : si.smoo
-#   ) + (no.noise : *(0.1))
+#   )
 #   : fi.lowpass(1, 2000)
-#   : *(ba.db2linear(-6));
+#   : *(
+#     hslider("amp", 0.5, 0, 1, 0.01)
+#     : si.smoo
+#   );
 ```
 
 ```ruby
