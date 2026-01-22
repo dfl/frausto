@@ -215,17 +215,13 @@ class Faust2Ruby::GeneratorTest < Minitest::Test
 
   def test_generate_case_with_default
     result = generate("process = case { (0) => 1; (n) => n * 2; };")
-    assert_includes result, "flambda(:n)"
-    assert_includes result, "select2"
-    assert_includes result, "n.eq(0)"
+    assert_includes result, "fcase(0 => 1)"
+    assert_includes result, "{ |n|"
   end
 
   def test_generate_case_multiple_branches
     result = generate("process = case { (0) => a; (1) => b; (2) => c; };")
-    assert_includes result, "flambda(:x)"
-    # Should have nested select2 calls
-    assert_includes result, "select2(x.eq(0)"
-    assert_includes result, "select2(x.eq(1)"
+    assert_includes result, "fcase(0 => a, 1 => b, 2 => c)"
   end
 
   def test_generate_case_only_variable_pattern
@@ -236,19 +232,17 @@ class Faust2Ruby::GeneratorTest < Minitest::Test
 
   def test_generate_case_variable_becomes_default
     result = generate("process = case { (0) => 10; (x) => x; };")
-    # The 'x' variable should be used in the flambda
-    assert_includes result, "flambda(:x)"
-    # Default case should be 'x' (the variable)
-    assert_includes result, "select2(x.eq(0), x, 10)"
+    # The 'x' variable should be used in the block
+    assert_includes result, "fcase(0 => 10)"
+    assert_includes result, "{ |x| x }"
   end
 
   def test_generate_multirule_function
     # Multi-rule functions like fact(0) = 1; fact(n) = n * ... should merge
     source = "fact(0) = 1; fact(n) = n * 2; process = fact(5);"
     result = Faust2Ruby.to_ruby(source)
-    # Should generate a flambda with select2
-    assert_includes result, "fact = flambda(:n)"
-    assert_includes result, "select2(n.eq(0)"
+    # Should generate fcase
+    assert_includes result, "fact = fcase(0 => 1)"
     assert_includes result, "process = fact(5)"
   end
 
@@ -256,7 +250,7 @@ class Faust2Ruby::GeneratorTest < Minitest::Test
     # Integer patterns should be checked in definition order
     source = "foo(0) = a; foo(1) = b; foo(n) = c; process = foo(x);"
     result = Faust2Ruby.to_ruby(source)
-    assert_includes result, "select2(n.eq(0)"
-    assert_includes result, "select2(n.eq(1)"
+    assert_includes result, "fcase(0 => a, 1 => b)"
+    assert_includes result, "{ |n| c }"
   end
 end

@@ -211,6 +211,7 @@ module Ruby2Faust
     # === Lambda ===
     LAMBDA = :lambda  # \(x).(body)
     PARAM  = :param   # Parameter reference
+    CASE   = :case    # case { (0) => a; (n) => b; }
 
     # === Tables ===
     RDTABLE  = :rdtable   # rdtable(n, init, ridx)

@@ -490,6 +490,14 @@ module Ruby2Faust
         "\\(#{param_str}).(#{emit(body.node, indent: indent, pretty: pretty)})"
       when NodeType::PARAM
         node.args[0].to_s
+      when NodeType::CASE
+        var_name, patterns, default_node = node.args
+        branches = patterns.map do |val, result_node|
+          "(#{val}) => #{emit(result_node, indent: indent, pretty: pretty)}"
+        end
+        default_expr = emit(default_node, indent: indent, pretty: pretty)
+        branches << "(#{var_name}) => #{default_expr}"
+        "case { #{branches.join('; ')}; }"
 
       # === TABLES ===
       when NodeType::RDTABLE

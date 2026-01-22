@@ -185,6 +185,11 @@ fpar(4) { osc((it + 1) * 100) }       # par(it, 4, osc((it+1)*100))
 flambda(:x) { |x| x * 2 }    # \(x).(x * 2)
 ```
 
+### Case (Pattern Matching)
+```ruby
+fcase(0 => 1, 1 => 2) { |n| n * 2 }  # case { (0) => 1; (1) => 2; (n) => n : *(2); }
+```
+
 ### Tables
 ```ruby
 waveform(0, 0.5, 1, 0.5)              # waveform{0, 0.5, 1, 0.5}

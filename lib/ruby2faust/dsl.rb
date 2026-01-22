@@ -1004,6 +1004,30 @@ module Ruby2Faust
       DSP.new(Node.new(type: NodeType::PARAM, args: [name]))
     end
 
+    # Case expression with integer patterns
+    # @param patterns [Hash{Integer => Object}] Integer patterns mapped to results
+    # @yield Block for default case, receives the input variable
+    # @return [DSP]
+    # @example
+    #   fcase(0 => 1, 1 => 2) { |n| n * 2 }
+    #   # generates: case { (0) => 1; (1) => 2; (n) => n * 2; }
+    def fcase(patterns = {}, &block)
+      raise ArgumentError, "fcase requires a block for the default case" unless block_given?
+
+      # Get variable name from block parameter
+      var_name = block.parameters.first&.last || :x
+      var = param(var_name)
+
+      # Evaluate the block to get the default expression
+      default_expr = to_dsp(block.call(var))
+
+      # Convert pattern values to DSP nodes
+      pattern_nodes = patterns.transform_values { |v| to_dsp(v).node }
+
+      # Create CASE node: args = [var_name, patterns_hash, default_expr]
+      DSP.new(Node.new(type: NodeType::CASE, args: [var_name, pattern_nodes, default_expr.node]))
+    end
+
     # =========================================================================
     # TABLES
     # =========================================================================

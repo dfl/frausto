@@ -149,23 +149,23 @@ faust_output = Ruby2Faust::Emitter.program(process)
 
 ### With Clauses
 
+Local definitions are converted to Ruby lambdas:
+
 ```faust
-myDSP = result with {
+myDSP = _ * gain with {
     gain = 0.5;
-    result = _ * gain;
 };
 ```
 ```ruby
 myDSP = -> {
   gain = 0.5
-  result = wire * gain
-  result
+  (wire * gain)
 }.call
 ```
 
 ### Case Expressions
 
-Integer patterns become `select2` chains:
+Faust's `case` creates a pattern-matching function—the `(n)` pattern binds the input signal to variable `n`:
 
 ```faust
 process = case {
@@ -175,8 +175,10 @@ process = case {
 };
 ```
 ```ruby
-flambda(:n) { |n| select2(n.eq(0), select2(n.eq(1), n * 2, 2), 1) }
+fcase(0 => 1, 1 => 2) { |n| (n * 2) }
 ```
+
+The `fcase` DSL method handles integer patterns as a hash, with the block as the default case.
 
 ### Partial Application
 

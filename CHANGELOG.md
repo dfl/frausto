@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.4] - 2025-01-22
+
+### Added
+- `fcase` DSL method for pattern-matching case expressions
+- Ruby: `fcase(0 => 1, 1 => 2) { |n| n * 2 }`
+- Faust: `case { (0) => 1; (1) => 2; (n) => n : *(2); }`
+
+### Changed
+- faust2ruby emits `fcase` instead of verbose `flambda`/`select2` chains
+- Simplified `with` clause documentation example
+
 ## [0.2.3] - 2025-01-21
 
 ### Added

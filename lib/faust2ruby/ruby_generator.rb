@@ -677,7 +677,7 @@ module Faust2Ruby
 
     # Generate code for case expressions
     # case { (0) => a; (1) => b; (n) => c; }
-    # converts to: flambda(:x) { |x| select2(x.eq(0), select2(x.eq(1), c, b), a) }
+    # converts to: fcase(0 => a, 1 => b) { |n| c }
     def generate_case_expr(node)
       branches = node.branches
 
@@ -706,29 +706,23 @@ module Faust2Ruby
         return generate_case_literal(node)
       end
 
-      # Generate a flambda that takes the input and uses select2 chains
-      # We need to use the variable name from default branch if present, else use 'x'
-      var = default_branch ? default_branch[:var] : "x"
-      var = ruby_safe_param(var)
+      # Get variable name from default branch if present, else use 'x'
+      var = default_branch ? ruby_safe_param(default_branch[:var]) : "x"
 
-      # Build the select2 chain from inside out
-      # Start with the default/else case (or the last integer branch result if no default)
+      # Build the fcase pattern hash
+      patterns = int_branches.map do |branch|
+        "#{branch[:value]} => #{generate_expression(branch[:result])}"
+      end.join(", ")
+
+      # Build default expression
       if default_branch
-        inner = generate_expression(default_branch[:result])
+        default_expr = generate_expression(default_branch[:result])
       else
-        # No default - use the last branch result as fallback (arbitrary choice)
-        inner = generate_expression(int_branches.last[:result])
-        int_branches = int_branches[0...-1]
+        # No default - use 0 as fallback
+        default_expr = "0"
       end
 
-      # Wrap each integer pattern with select2
-      # select2(cond, false_val, true_val) - condition true returns second arg
-      int_branches.reverse_each do |branch|
-        result = generate_expression(branch[:result])
-        inner = "select2(#{var}.eq(#{branch[:value]}), #{inner}, #{result})"
-      end
-
-      "flambda(:#{var}) { |#{var}| #{inner} }"
+      "fcase(#{patterns}) { |#{var}| #{default_expr} }"
     end
 
     # Fall back to literal for complex case expressions
