@@ -8,11 +8,15 @@ All notable changes to this project will be documented in this file.
 - `fcase` DSL method for pattern-matching case expressions
 - Chainable conversion functions: `db2linear`, `midi2hz`, `hz2midi`, `linear2db`, `sec2samp`, `samp2sec`
   - Example: `hslider("amp", ...) >> db2linear >> smoo`
+- `output:` parameter for `Ruby2Faust.generate` and `Emitter.program` (default: "process", also supports "effect")
+- faust2ruby detects and preserves `effect` output (not just `process`)
+- faust2ruby CLI defaults output to `<input>.rb`
 
 ### Changed
 - `pretty: true` is now the default for `Ruby2Faust.generate`
 - faust2ruby emits `fcase` instead of verbose `flambda`/`select2` chains
-- README example now shows MIDI and dB conversion with smoothed sliders
+- Multiplication always emits idiomatic `signal : *(gain)` form (even for DSP * DSP)
+- Improved documentation with realistic synth examples
 
 ## [0.2.3] - 2025-01-21
 
