@@ -18,7 +18,7 @@ parser = OptionParser.new do |opts|
   opts.separator ""
   opts.separator "Options:"
 
-  opts.on("-o", "--output FILE", "Output Ruby file (default: stdout)") do |file|
+  opts.on("-o", "--output FILE", "Output Ruby file (default: <input>.rb)") do |file|
     options[:output] = file
   end
 
@@ -74,6 +74,8 @@ else
   end
   source = File.read(input_path)
   input_name = input_path
+  # Default output to input.dsp.rb (unless expression-only mode or explicit -o)
+  options[:output] ||= "#{input_path}.rb" unless options[:expression_only]
 end
 
 begin

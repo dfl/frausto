@@ -13,11 +13,14 @@ gem install frausto
 ### Command Line
 
 ```bash
-# Convert a Faust file to Ruby
-faust2ruby input.dsp -o output.rb
+# Convert a Faust file to Ruby (writes to file.dsp.rb)
+faust2ruby file.dsp
 
-# Output only the process expression (no boilerplate)
-faust2ruby -e input.dsp
+# Specify output file
+faust2ruby file.dsp -o other.rb
+
+# Output only the process expression (no boilerplate, to stdout)
+faust2ruby -e file.dsp
 
 # Read from stdin
 echo 'process = os.osc(440) : *(0.5);' | faust2ruby -e
