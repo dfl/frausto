@@ -219,23 +219,17 @@ module Ruby2Faust
       when NodeType::MUL
         if node.inputs.count == 2
           left_node, right_node = node.inputs
-          # Normalize: signal : *(scalar) - idiomatic Faust gain (uses SEQ precedence)
-          if scalar?(right_node) && !scalar?(left_node)
-            my_prec = PREC[:seq]
-            left = emit(left_node, indent: indent, pretty: pretty, prec: my_prec)
-            right = emit(right_node, indent: indent, pretty: pretty, prec: PREC[:primary])
-            wrap("#{left} : *(#{right})", my_prec, prec)
-          elsif scalar?(left_node) && !scalar?(right_node)
-            my_prec = PREC[:seq]
-            left = emit(right_node, indent: indent, pretty: pretty, prec: my_prec)
-            right = emit(left_node, indent: indent, pretty: pretty, prec: PREC[:primary])
-            wrap("#{left} : *(#{right})", my_prec, prec)
-          else
-            my_prec = PREC[:mul]
-            left = emit(left_node, indent: indent, pretty: pretty, prec: my_prec)
-            right = emit(right_node, indent: indent, pretty: pretty, prec: my_prec + 1)
-            wrap("#{left} * #{right}", my_prec, prec)
+          # Always emit idiomatic Faust: signal : *(gain)
+          # Normalize scalar-on-left to signal : *(scalar)
+          if scalar?(left_node) && !scalar?(right_node)
+            # Swap: put signal on left
+            left_node, right_node = right_node, left_node
           end
+          my_prec = PREC[:seq]
+          left = emit(left_node, indent: indent, pretty: pretty, prec: my_prec)
+          # Don't require high precedence for gain arg - *(x) already groups it
+          right = emit(right_node, indent: indent, pretty: pretty, prec: 0)
+          wrap("#{left} : *(#{right})", my_prec, prec)
         else
           "*"
         end
