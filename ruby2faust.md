@@ -309,7 +309,7 @@ code = Ruby2Faust.generate do
   res = hslider("res", init: 0.5, min: 0, max: 1, step: 0.01)
 
   env = adsr(0.01, 0.1, 0.7, 0.3, gate)
-  saw(freq) >> resonlp(cutoff, res, 1) >> gain(env)
+  saw(freq) >> resonlp(cutoff, res, 1) * env
 end
 ```
 
@@ -323,7 +323,7 @@ code = Ruby2Faust.generate do
   fback = hslider("feedback", init: 0.5, min: 0, max: 0.95, step: 0.01) >> smoo
   wet = hslider("wet", init: 0.5, min: 0, max: 1, step: 0.01) >> smoo
 
-  wire.feedback(delay(48000, dtime) >> gain(fback)) >> gain(wet)
+  wire.feedback(delay(48000, dtime) * fback) * wet
 end
 ```
 
@@ -337,7 +337,7 @@ code = Ruby2Faust.generate do
   pan = hslider("pan", init: 0.5, min: 0, max: 1, step: 0.01) >> smoo
   amp = hslider("amp", init: -12, min: -60, max: 0, step: 1) >> db2linear >> smoo
 
-  osc(freq) >> gain(amp) >> panner(pan)
+  osc(freq) * amp >> panner(pan)
 end
 ```
 
