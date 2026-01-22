@@ -7,13 +7,10 @@ A Ruby DSL that generates Faust DSP code. Ruby describes the graph; Faust compil
 ```ruby
 require 'ruby2faust'
 
-# Idiomatic Ruby style
 code = Ruby2Faust.generate do
-  # Use numeric extensions: .midi, .hz, .db
-  freq = 60.midi >> smoo
-  
-  # Arithmetic operators for signal mixing
-  (osc(freq) + noise) * -6.db
+  freq = hslider("freq", init: 48, min: 20, max: 100, step: 1) >> midi2hz >> smoo
+  amp = hslider("amp", init: -12, min: -60, max: 0, step: 1) >> db2linear >> smoo
+  osc(freq) >> lp(2000) >> gain(amp)
 end
 
 puts code
@@ -23,7 +20,10 @@ Output:
 ```faust
 import("stdfaust.lib");
 
-process = ((os.osc(ba.midikey2hz(60)) + no.noise) * ba.db2linear(-6));
+process =
+  os.osc(hslider("freq", 48, 20, 100, 1) : ba.midikey2hz : si.smoo)
+  : fi.lowpass(1, 2000)
+  : *(hslider("amp", -12, -60, 0, 1) : ba.db2linear : si.smoo);
 ```
 
 ## Composition
@@ -301,20 +301,44 @@ end
 
 ```ruby
 require 'ruby2faust'
-include Ruby2Faust::DSL
 
-gate = button("gate")
-freq = slider("freq", init: 220, min: 20, max: 2000, style: :knob) >> smoo
-cutoff = slider("cutoff", init: 1000, min: 100, max: 8000, style: :knob) >> smoo
+code = Ruby2Faust.generate do
+  gate = button("gate")
+  freq = hslider("freq", init: 48, min: 20, max: 100, step: 1) >> midi2hz >> smoo
+  cutoff = hslider("cutoff", init: 2000, min: 100, max: 10000, step: 1) >> smoo
+  res = hslider("res", init: 0.5, min: 0, max: 1, step: 0.01)
 
-env = adsr(0.01, 0.2, 0.6, 0.3, gate)
+  env = adsr(0.01, 0.1, 0.7, 0.3, gate)
+  saw(freq) >> resonlp(cutoff, res, 1) >> gain(env)
+end
+```
 
-process = saw(freq) >> resonlp(cutoff, 4, 1) >> gain(env) >> panner(0.5)
+## Example: Feedback Delay
 
-prog = Ruby2Faust::Program.new(process)
-  .declare(:name, "SubSynth")
+```ruby
+require 'ruby2faust'
 
-puts Ruby2Faust::Emitter.program(prog)
+code = Ruby2Faust.generate do
+  dtime = hslider("delay", init: 0.3, min: 0.01, max: 1, step: 0.01) >> sec2samp >> smoo
+  fback = hslider("feedback", init: 0.5, min: 0, max: 0.95, step: 0.01) >> smoo
+  wet = hslider("wet", init: 0.5, min: 0, max: 1, step: 0.01) >> smoo
+
+  wire.feedback(delay(48000, dtime) >> gain(fback)) >> gain(wet)
+end
+```
+
+## Example: Stereo Panner
+
+```ruby
+require 'ruby2faust'
+
+code = Ruby2Faust.generate do
+  freq = hslider("freq", init: 48, min: 20, max: 100, step: 1) >> midi2hz >> smoo
+  pan = hslider("pan", init: 0.5, min: 0, max: 1, step: 0.01) >> smoo
+  amp = hslider("amp", init: -12, min: -60, max: 0, step: 1) >> db2linear >> smoo
+
+  osc(freq) >> gain(amp) >> panner(pan)
+end
 ```
 
 ## CLI
