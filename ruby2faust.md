@@ -282,11 +282,11 @@ prog = Ruby2Faust::Program.new do
   osc(440) * 0.5
 end
 
-# Generate pretty-printed Faust with indentation and newlines
-puts Ruby2Faust::Emitter.program(prog, pretty: true)
+# Generate Faust (pretty-printed by default)
+puts Ruby2Faust::Emitter.program(prog)
 
-# The generate helper also supports pretty: true
-puts Ruby2Faust.generate(pretty: true) do
+# Use pretty: false for compact single-line output
+puts Ruby2Faust.generate(pretty: false) do
   hgroup("Synth") { osc(440) + noise }
 end
 ```

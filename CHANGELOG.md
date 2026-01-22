@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Faust: `case { (0) => 1; (1) => 2; (n) => n : *(2); }`
 
 ### Changed
+- `pretty: true` is now the default for `Ruby2Faust.generate`
 - faust2ruby emits `fcase` instead of verbose `flambda`/`select2` chains
 - Simplified `with` clause documentation example
 

@@ -35,19 +35,15 @@ code = Ruby2Faust.generate do
 end
 
 puts code
-# => import("stdfaust.lib");
-#    process = os.osc(ba.midikey2hz(60) : si.smoo) + (no.noise : *(0.1)) : fi.lowpass(1, 2000) : *(ba.db2linear(-6));
-
-# Use pretty: true for readable output
-puts Ruby2Faust.generate(pretty: true) { -6.db * ((osc(60.midi >> smoo) + 0.1 * noise) >> lp(2000)) }
-# => import("stdfaust.lib");
-#    process =
-#      os.osc(
-#        ba.midikey2hz(60)
-#        : si.smoo
-#      ) + (no.noise : *(0.1))
-#      : fi.lowpass(1, 2000)
-#      : *(ba.db2linear(-6));
+# import("stdfaust.lib");
+#
+# process =
+#   os.osc(
+#     ba.midikey2hz(60)
+#     : si.smoo
+#   ) + (no.noise : *(0.1))
+#   : fi.lowpass(1, 2000)
+#   : *(ba.db2linear(-6));
 ```
 
 ```ruby

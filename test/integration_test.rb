@@ -12,7 +12,8 @@ class IntegrationTest < Minitest::Test
     end
 
     assert_includes code, 'import("stdfaust.lib");'
-    assert_includes code, "process = os.osc(440) : *(0.3);"
+    assert_includes code, "os.osc(440)"
+    assert_includes code, "*(0.3)"
   end
 
   def test_generate_with_slider
@@ -37,7 +38,7 @@ class IntegrationTest < Minitest::Test
     # Should have two parallel oscillators
     assert_includes code, "os.osc(440)"
     assert_includes code, "os.osc(442)"
-    assert_includes code, ", "  # parallel composition
+    assert_includes code, ","  # parallel composition
   end
 
   def test_generate_filter_chain
